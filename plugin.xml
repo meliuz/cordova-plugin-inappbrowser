@@ -19,14 +19,14 @@
 -->
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-           id="cordova-plugin-inappbrowser"
+           id="cordova-plugin-inappbrowser-meliuz"
       version="1.0.1-dev">
 
-    <name>InAppBrowser</name>
-    <description>Cordova InAppBrowser Plugin</description>
+    <name>InAppBrowser Méliuz</name>
+    <description>Cordova InAppBrowser Méliuz Plugin</description>
     <license>Apache 2.0</license>
-    <keywords>cordova,in,app,browser,inappbrowser</keywords>
-    <repo>https://git-wip-us.apache.org/repos/asf/cordova-plugin-inappbrowser.git</repo>
+    <keywords>cordova,in,app,browser,inappbrowser,meliuz</keywords>
+    <repo>https://github.com/meliuz/cordova-plugin-inappbrowser.git</repo>
     <issue>https://issues.apache.org/jira/browse/CB/component/12320641</issue>
 
     <engines>
