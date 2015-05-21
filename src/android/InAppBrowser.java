@@ -74,7 +74,6 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String SYSTEM = "_system";
     // private static final String BLANK = "_blank";
     private static final String EXIT_EVENT = "exit";
-    private static final String LOCATION = "location";
     private static final String ZOOM = "zoom";
     private static final String HIDDEN = "hidden";
     private static final String LOAD_START_EVENT = "loadstart";
@@ -88,7 +87,6 @@ public class InAppBrowser extends CordovaPlugin {
     private WebView inAppWebView;
     private EditText edittext;
     private CallbackContext callbackContext;
-    private boolean showLocationBar = true;
     private boolean showZoomControls = true;
     private boolean openWindowHidden = false;
     private boolean clearAllCache= false;
@@ -447,15 +445,6 @@ public class InAppBrowser extends CordovaPlugin {
 
 
     /**
-     * Should we show the location bar?
-     *
-     * @return boolean
-     */
-    private boolean getShowLocationBar() {
-        return this.showLocationBar;
-    }
-
-    /**
      * Should we show the zoom controls?
      *
      * @return boolean
@@ -475,15 +464,9 @@ public class InAppBrowser extends CordovaPlugin {
      * @param jsonObject
      */
     public String showWebPage(final String url, HashMap<String, Boolean> features) {
-        // Determine if we should hide the location bar.
-        showLocationBar = true;
         showZoomControls = true;
         openWindowHidden = false;
         if (features != null) {
-            Boolean show = features.get(LOCATION);
-            if (show != null) {
-                showLocationBar = show.booleanValue();
-            }
             Boolean zoom = features.get(ZOOM);
             if (zoom != null) {
                 showZoomControls = zoom.booleanValue();
@@ -653,9 +636,6 @@ public class InAppBrowser extends CordovaPlugin {
 
                 // Add the views to our topToolbar
                 topToolbar.addView(actionButtonContainer);
-                if (getShowLocationBar()) {
-                    topToolbar.addView(edittext);
-                }
                 topToolbar.addView(close);
 
                 // Add our topToolbar to our main view/layout

@@ -46,10 +46,7 @@
 
 @interface CDVInAppBrowserOptions : NSObject {}
 
-@property (nonatomic, assign) BOOL location;
-@property (nonatomic, assign) BOOL toolbar;
 @property (nonatomic, copy) NSString* closebuttoncaption;
-@property (nonatomic, copy) NSString* toolbarposition;
 @property (nonatomic, assign) BOOL clearcache;
 @property (nonatomic, assign) BOOL clearsessioncache;
 
@@ -98,8 +95,6 @@
 
 - (void)close;
 - (void)navigateTo:(NSURL*)url;
-- (void)showLocationBar:(BOOL)show;
-- (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition;
 - (void)setCloseButtonTitle:(NSString*)title;
 
 - (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVInAppBrowserOptions*) browserOptions;

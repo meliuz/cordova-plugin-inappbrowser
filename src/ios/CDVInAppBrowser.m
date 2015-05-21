@@ -25,12 +25,7 @@
 #define    kInAppBrowserTargetSystem @"_system"
 #define    kInAppBrowserTargetBlank @"_blank"
 
-#define    kInAppBrowserToolbarBarPositionBottom @"bottom"
-#define    kInAppBrowserToolbarBarPositionTop @"top"
-
 #define    TOOLBAR_HEIGHT 44.0
-#define    LOCATIONBAR_HEIGHT 21.0
-#define    FOOTER_HEIGHT ((TOOLBAR_HEIGHT) + (LOCATIONBAR_HEIGHT))
 
 #pragma mark CDVInAppBrowser
 
@@ -146,8 +141,6 @@
         }
     }
 
-    [self.inAppBrowserViewController showLocationBar:browserOptions.location];
-    [self.inAppBrowserViewController showToolBar:browserOptions.toolbar :browserOptions.toolbarposition];
     if (browserOptions.closebuttoncaption != nil) {
         [self.inAppBrowserViewController setCloseButtonTitle:browserOptions.closebuttoncaption];
     }
@@ -482,8 +475,7 @@
     // We create the views in code for primarily for ease of upgrades and not requiring an external .xib to be included
 
     CGRect webViewBounds = self.view.bounds;
-    BOOL toolbarIsAtBottom = ![_browserOptions.toolbarposition isEqualToString:kInAppBrowserToolbarBarPositionTop];
-    webViewBounds.size.height -= _browserOptions.location ? FOOTER_HEIGHT : TOOLBAR_HEIGHT;
+    webViewBounds.size.height -= TOOLBAR_HEIGHT;
     self.webView = [[UIWebView alloc] initWithFrame:webViewBounds];
 
     self.webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
@@ -526,10 +518,9 @@
     fixedSpaceButton.width = 20;
 
     self.topToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
-    self.topToolbar.alpha = 1.000;
+    self.topToolbar.alpha = 1.0;
     self.topToolbar.autoresizesSubviews = YES;
     self.topToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    // self.topToolbar.barStyle = UIBarStyleBlackOpaque;
     self.topToolbar.barTintColor = [UIColor whiteColor];
     self.topToolbar.clearsContextBeforeDrawing = NO;
     self.topToolbar.clipsToBounds = NO;
@@ -540,37 +531,7 @@
     self.topToolbar.userInteractionEnabled = YES;
 
     CGFloat labelInset = 5.0;
-    float locationBarY = toolbarIsAtBottom ? self.view.bounds.size.height - FOOTER_HEIGHT : self.view.bounds.size.height - LOCATIONBAR_HEIGHT;
-
-    self.addressLabel = [[UILabel alloc] initWithFrame:CGRectMake(labelInset, locationBarY, self.view.bounds.size.width - labelInset, LOCATIONBAR_HEIGHT)];
-    self.addressLabel.adjustsFontSizeToFitWidth = NO;
-    self.addressLabel.alpha = 1.000;
-    self.addressLabel.autoresizesSubviews = YES;
-    self.addressLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin;
-    self.addressLabel.backgroundColor = [UIColor clearColor];
-    self.addressLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
-    self.addressLabel.clearsContextBeforeDrawing = YES;
-    self.addressLabel.clipsToBounds = YES;
-    self.addressLabel.contentMode = UIViewContentModeScaleToFill;
-    self.addressLabel.enabled = YES;
-    self.addressLabel.hidden = NO;
-    self.addressLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-
-    if ([self.addressLabel respondsToSelector:NSSelectorFromString(@"setMinimumScaleFactor:")]) {
-        [self.addressLabel setValue:@(10.0/[UIFont labelFontSize]) forKey:@"minimumScaleFactor"];
-    } else if ([self.addressLabel respondsToSelector:NSSelectorFromString(@"setMinimumFontSize:")]) {
-        [self.addressLabel setValue:@(10.0) forKey:@"minimumFontSize"];
-    }
-
-    self.addressLabel.multipleTouchEnabled = NO;
-    self.addressLabel.numberOfLines = 1;
-    self.addressLabel.opaque = NO;
-    self.addressLabel.shadowOffset = CGSizeMake(0.0, -1.0);
-    self.addressLabel.text = NSLocalizedString(@"Loading...", nil);
-    self.addressLabel.textAlignment = NSTextAlignmentLeft;
-    self.addressLabel.textColor = [UIColor colorWithWhite:1.000 alpha:1.000];
-    self.addressLabel.userInteractionEnabled = NO;
-
+    
     NSString* frontArrowString = NSLocalizedString(@"►", nil); // create arrow from Unicode char
     self.forwardButton = [[UIBarButtonItem alloc] initWithTitle:frontArrowString style:UIBarButtonItemStylePlain target:self action:@selector(goForward:)];
     self.forwardButton.enabled = YES;
@@ -584,10 +545,9 @@
     [self.topToolbar setItems:@[self.closeButton, flexibleSpaceButton, self.backButton, fixedSpaceButton, self.forwardButton]];
 
     self.bottomToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, self.view.bounds.size.height - TOOLBAR_HEIGHT, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
-    self.bottomToolbar.alpha = 1.000;
+    self.bottomToolbar.alpha = 1.0;
     self.bottomToolbar.autoresizesSubviews = YES;
     self.bottomToolbar.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin);
-    // self.bottomToolbar.barStyle = UIBarStyleBlackOpaque;
     self.bottomToolbar.barTintColor = [UIColor whiteColor];
     self.bottomToolbar.clearsContextBeforeDrawing = NO;
     self.bottomToolbar.clipsToBounds = NO;
@@ -600,7 +560,6 @@
     self.view.backgroundColor = [UIColor grayColor];
     [self.view addSubview:self.topToolbar];
     [self.view addSubview:self.bottomToolbar];
-    [self.view addSubview:self.addressLabel];
     [self.view addSubview:self.spinner];
 }
 
@@ -622,118 +581,6 @@
     NSMutableArray* items = [self.topToolbar.items mutableCopy];
     [items replaceObjectAtIndex:0 withObject:self.closeButton];
     [self.topToolbar setItems:items];
-}
-
-- (void)showLocationBar:(BOOL)show
-{
-    CGRect locationbarFrame = self.addressLabel.frame;
-
-    BOOL toolbarVisible = !self.topToolbar.hidden;
-
-    // prevent double show/hide
-    if (show == !(self.addressLabel.hidden)) {
-        return;
-    }
-
-    if (show) {
-        self.addressLabel.hidden = NO;
-
-        if (toolbarVisible) {
-            // toolBar at the bottom, leave as is
-            // put locationBar on top of the toolBar
-
-            CGRect webViewBounds = self.view.bounds;
-            webViewBounds.size.height -= FOOTER_HEIGHT;
-            [self setWebViewFrame:webViewBounds];
-
-            locationbarFrame.origin.y = webViewBounds.size.height;
-            self.addressLabel.frame = locationbarFrame;
-        } else {
-            // no toolBar, so put locationBar at the bottom
-
-            CGRect webViewBounds = self.view.bounds;
-            webViewBounds.size.height -= LOCATIONBAR_HEIGHT;
-            [self setWebViewFrame:webViewBounds];
-
-            locationbarFrame.origin.y = webViewBounds.size.height;
-            self.addressLabel.frame = locationbarFrame;
-        }
-    } else {
-        self.addressLabel.hidden = YES;
-
-        if (toolbarVisible) {
-            // locationBar is on top of toolBar, hide locationBar
-
-            // webView take up whole height less toolBar height
-            CGRect webViewBounds = self.view.bounds;
-            webViewBounds.size.height -= TOOLBAR_HEIGHT;
-            [self setWebViewFrame:webViewBounds];
-        } else {
-            // no toolBar, expand webView to screen dimensions
-            [self setWebViewFrame:self.view.bounds];
-        }
-    }
-}
-
-- (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition
-{
-    CGRect toolbarFrame = self.topToolbar.frame;
-    CGRect locationbarFrame = self.addressLabel.frame;
-
-    BOOL locationbarVisible = !self.addressLabel.hidden;
-
-    // prevent double show/hide
-    if (show == !(self.topToolbar.hidden)) {
-        return;
-    }
-
-    if (show) {
-        self.topToolbar.hidden = NO;
-        CGRect webViewBounds = self.view.bounds;
-
-        if (locationbarVisible) {
-            // locationBar at the bottom, move locationBar up
-            // put toolBar at the bottom
-            webViewBounds.size.height -= FOOTER_HEIGHT;
-            locationbarFrame.origin.y = webViewBounds.size.height;
-            self.addressLabel.frame = locationbarFrame;
-            self.topToolbar.frame = toolbarFrame;
-        } else {
-            // no locationBar, so put toolBar at the bottom
-            CGRect webViewBounds = self.view.bounds;
-            webViewBounds.size.height -= TOOLBAR_HEIGHT;
-            self.topToolbar.frame = toolbarFrame;
-        }
-
-        if ([toolbarPosition isEqualToString:kInAppBrowserToolbarBarPositionTop]) {
-            toolbarFrame.origin.y = 0;
-            webViewBounds.origin.y += toolbarFrame.size.height;
-            [self setWebViewFrame:webViewBounds];
-        } else {
-            toolbarFrame.origin.y = (webViewBounds.size.height + LOCATIONBAR_HEIGHT);
-        }
-        [self setWebViewFrame:webViewBounds];
-
-    } else {
-        self.topToolbar.hidden = YES;
-
-        if (locationbarVisible) {
-            // locationBar is on top of toolBar, hide toolBar
-            // put locationBar at the bottom
-
-            // webView take up whole height less locationBar height
-            CGRect webViewBounds = self.view.bounds;
-            webViewBounds.size.height -= LOCATIONBAR_HEIGHT;
-            [self setWebViewFrame:webViewBounds];
-
-            // move locationBar down
-            locationbarFrame.origin.y = webViewBounds.size.height;
-            self.addressLabel.frame = locationbarFrame;
-        } else {
-            // no locationBar, expand webView to screen dimensions
-            [self setWebViewFrame:self.view.bounds];
-        }
-    }
 }
 
 - (void)viewDidLoad
@@ -819,10 +666,9 @@
 }
 
 - (void) rePositionViews {
-    if ([_browserOptions.toolbarposition isEqualToString:kInAppBrowserToolbarBarPositionTop]) {
-        [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, TOOLBAR_HEIGHT, self.webView.frame.size.width, self.webView.frame.size.height)];
-        [self.topToolbar setFrame:CGRectMake(self.topToolbar.frame.origin.x, [self getStatusBarOffset], self.topToolbar.frame.size.width, self.topToolbar.frame.size.height)];
-    }
+    [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, TOOLBAR_HEIGHT, self.webView.frame.size.width, self.webView.frame.size.height)];
+    [self.topToolbar setFrame:CGRectMake(self.topToolbar.frame.origin.x, [self getStatusBarOffset], self.topToolbar.frame.size.width, self.topToolbar.frame.size.height)];
+    [self.bottomToolbar setFrame:CGRectMake(self.bottomToolbar.frame.origin.x, self.view.bounds.size.height - TOOLBAR_HEIGHT, self.bottomToolbar.frame.size.width, self.bottomToolbar.frame.size.height)];
 }
 
 #pragma mark UIWebViewDelegate
@@ -929,10 +775,7 @@
 {
     if (self = [super init]) {
         // default values
-        self.location = YES;
-        self.toolbar = YES;
         self.closebuttoncaption = nil;
-        self.toolbarposition = kInAppBrowserToolbarBarPositionBottom;
         self.clearcache = NO;
         self.clearsessioncache = NO;
 
