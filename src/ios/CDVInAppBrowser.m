@@ -64,11 +64,11 @@
 
 - (BOOL) isSystemUrl:(NSURL*)url
 {
-	if ([[url host] isEqualToString:@"itunes.apple.com"]) {
-		return YES;
-	}
+    if ([[url host] isEqualToString:@"itunes.apple.com"]) {
+        return YES;
+    }
 
-	return NO;
+    return NO;
 }
 
 - (void)open:(CDVInvokedUrlCommand*)command
@@ -525,21 +525,19 @@
     UIBarButtonItem* fixedSpaceButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
     fixedSpaceButton.width = 20;
 
-    float toolbarY = toolbarIsAtBottom ? self.view.bounds.size.height - TOOLBAR_HEIGHT : 0.0;
-    CGRect toolbarFrame = CGRectMake(0.0, toolbarY, self.view.bounds.size.width, TOOLBAR_HEIGHT);
-
-    self.toolbar = [[UIToolbar alloc] initWithFrame:toolbarFrame];
-    self.toolbar.alpha = 1.000;
-    self.toolbar.autoresizesSubviews = YES;
-    self.toolbar.autoresizingMask = toolbarIsAtBottom ? (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin) : UIViewAutoresizingFlexibleWidth;
-    self.toolbar.barStyle = UIBarStyleBlackOpaque;
-    self.toolbar.clearsContextBeforeDrawing = NO;
-    self.toolbar.clipsToBounds = NO;
-    self.toolbar.contentMode = UIViewContentModeScaleToFill;
-    self.toolbar.hidden = NO;
-    self.toolbar.multipleTouchEnabled = NO;
-    self.toolbar.opaque = NO;
-    self.toolbar.userInteractionEnabled = YES;
+    self.topToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
+    self.topToolbar.alpha = 1.000;
+    self.topToolbar.autoresizesSubviews = YES;
+    self.topToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    // self.topToolbar.barStyle = UIBarStyleBlackOpaque;
+    self.topToolbar.barTintColor = [UIColor whiteColor];
+    self.topToolbar.clearsContextBeforeDrawing = NO;
+    self.topToolbar.clipsToBounds = NO;
+    self.topToolbar.contentMode = UIViewContentModeScaleToFill;
+    self.topToolbar.hidden = NO;
+    self.topToolbar.multipleTouchEnabled = NO;
+    self.topToolbar.opaque = YES;
+    self.topToolbar.userInteractionEnabled = YES;
 
     CGFloat labelInset = 5.0;
     float locationBarY = toolbarIsAtBottom ? self.view.bounds.size.height - FOOTER_HEIGHT : self.view.bounds.size.height - LOCATIONBAR_HEIGHT;
@@ -583,15 +581,31 @@
     self.backButton.enabled = YES;
     self.backButton.imageInsets = UIEdgeInsetsZero;
 
-    [self.toolbar setItems:@[self.closeButton, flexibleSpaceButton, self.backButton, fixedSpaceButton, self.forwardButton]];
+    [self.topToolbar setItems:@[self.closeButton, flexibleSpaceButton, self.backButton, fixedSpaceButton, self.forwardButton]];
+
+    self.bottomToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, self.view.bounds.size.height - TOOLBAR_HEIGHT, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
+    self.bottomToolbar.alpha = 1.000;
+    self.bottomToolbar.autoresizesSubviews = YES;
+    self.bottomToolbar.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin);
+    // self.bottomToolbar.barStyle = UIBarStyleBlackOpaque;
+    self.bottomToolbar.barTintColor = [UIColor whiteColor];
+    self.bottomToolbar.clearsContextBeforeDrawing = NO;
+    self.bottomToolbar.clipsToBounds = NO;
+    self.bottomToolbar.contentMode = UIViewContentModeScaleToFill;
+    self.bottomToolbar.hidden = NO;
+    self.bottomToolbar.multipleTouchEnabled = NO;
+    self.bottomToolbar.opaque = YES;
+    self.bottomToolbar.userInteractionEnabled = YES;
 
     self.view.backgroundColor = [UIColor grayColor];
-    [self.view addSubview:self.toolbar];
+    [self.view addSubview:self.topToolbar];
+    [self.view addSubview:self.bottomToolbar];
     [self.view addSubview:self.addressLabel];
     [self.view addSubview:self.spinner];
 }
 
 - (void) setWebViewFrame : (CGRect) frame {
+    frame = CGRectMake(0.0, TOOLBAR_HEIGHT, self.view.bounds.size.width, self.view.bounds.size.height - (2 * TOOLBAR_HEIGHT));
     NSLog(@"Setting the WebView's frame to %@", NSStringFromCGRect(frame));
     [self.webView setFrame:frame];
 }
@@ -605,16 +619,16 @@
     self.closeButton.enabled = YES;
     self.closeButton.tintColor = [UIColor colorWithRed:60.0 / 255.0 green:136.0 / 255.0 blue:230.0 / 255.0 alpha:1];
 
-    NSMutableArray* items = [self.toolbar.items mutableCopy];
+    NSMutableArray* items = [self.topToolbar.items mutableCopy];
     [items replaceObjectAtIndex:0 withObject:self.closeButton];
-    [self.toolbar setItems:items];
+    [self.topToolbar setItems:items];
 }
 
 - (void)showLocationBar:(BOOL)show
 {
     CGRect locationbarFrame = self.addressLabel.frame;
 
-    BOOL toolbarVisible = !self.toolbar.hidden;
+    BOOL toolbarVisible = !self.topToolbar.hidden;
 
     // prevent double show/hide
     if (show == !(self.addressLabel.hidden)) {
@@ -663,18 +677,18 @@
 
 - (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition
 {
-    CGRect toolbarFrame = self.toolbar.frame;
+    CGRect toolbarFrame = self.topToolbar.frame;
     CGRect locationbarFrame = self.addressLabel.frame;
 
     BOOL locationbarVisible = !self.addressLabel.hidden;
 
     // prevent double show/hide
-    if (show == !(self.toolbar.hidden)) {
+    if (show == !(self.topToolbar.hidden)) {
         return;
     }
 
     if (show) {
-        self.toolbar.hidden = NO;
+        self.topToolbar.hidden = NO;
         CGRect webViewBounds = self.view.bounds;
 
         if (locationbarVisible) {
@@ -683,12 +697,12 @@
             webViewBounds.size.height -= FOOTER_HEIGHT;
             locationbarFrame.origin.y = webViewBounds.size.height;
             self.addressLabel.frame = locationbarFrame;
-            self.toolbar.frame = toolbarFrame;
+            self.topToolbar.frame = toolbarFrame;
         } else {
             // no locationBar, so put toolBar at the bottom
             CGRect webViewBounds = self.view.bounds;
             webViewBounds.size.height -= TOOLBAR_HEIGHT;
-            self.toolbar.frame = toolbarFrame;
+            self.topToolbar.frame = toolbarFrame;
         }
 
         if ([toolbarPosition isEqualToString:kInAppBrowserToolbarBarPositionTop]) {
@@ -701,7 +715,7 @@
         [self setWebViewFrame:webViewBounds];
 
     } else {
-        self.toolbar.hidden = YES;
+        self.topToolbar.hidden = YES;
 
         if (locationbarVisible) {
             // locationBar is on top of toolBar, hide toolBar
@@ -807,7 +821,7 @@
 - (void) rePositionViews {
     if ([_browserOptions.toolbarposition isEqualToString:kInAppBrowserToolbarBarPositionTop]) {
         [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, TOOLBAR_HEIGHT, self.webView.frame.size.width, self.webView.frame.size.height)];
-        [self.toolbar setFrame:CGRectMake(self.toolbar.frame.origin.x, [self getStatusBarOffset], self.toolbar.frame.size.width, self.toolbar.frame.size.height)];
+        [self.topToolbar setFrame:CGRectMake(self.topToolbar.frame.origin.x, [self getStatusBarOffset], self.topToolbar.frame.size.width, self.topToolbar.frame.size.height)];
     }
 }
 

@@ -348,7 +348,7 @@ public class InAppBrowser extends CordovaPlugin {
             } else {
                 intent.setData(uri);
             }
-			intent.putExtra(Browser.EXTRA_APPLICATION_ID, cordova.getActivity().getPackageName());
+            intent.putExtra(Browser.EXTRA_APPLICATION_ID, cordova.getActivity().getPackageName());
             this.cordova.getActivity().startActivity(intent);
             return "";
         } catch (android.content.ActivityNotFoundException e) {
@@ -538,14 +538,14 @@ public class InAppBrowser extends CordovaPlugin {
                 LinearLayout main = new LinearLayout(cordova.getActivity());
                 main.setOrientation(LinearLayout.VERTICAL);
 
-                // Toolbar layout
-                RelativeLayout toolbar = new RelativeLayout(cordova.getActivity());
+                // Top toolbar layout
+                RelativeLayout topToolbar = new RelativeLayout(cordova.getActivity());
                 //Please, no more black! 
-                toolbar.setBackgroundColor(android.graphics.Color.LTGRAY);
-                toolbar.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44)));
-                toolbar.setPadding(this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2));
-                toolbar.setHorizontalGravity(Gravity.LEFT);
-                toolbar.setVerticalGravity(Gravity.TOP);
+                topToolbar.setBackgroundColor(android.graphics.Color.WHITE);
+                topToolbar.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44)));
+                topToolbar.setPadding(this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2));
+                topToolbar.setHorizontalGravity(Gravity.LEFT);
+                topToolbar.setVerticalGravity(Gravity.TOP);
 
                 // Action Button Container layout
                 RelativeLayout actionButtonContainer = new RelativeLayout(cordova.getActivity());
@@ -647,9 +647,23 @@ public class InAppBrowser extends CordovaPlugin {
                     }
                 });
 
+                // Add the back and forward buttons to our action button container layout
+                actionButtonContainer.addView(back);
+                actionButtonContainer.addView(forward);
+
+                // Add the views to our topToolbar
+                topToolbar.addView(actionButtonContainer);
+                if (getShowLocationBar()) {
+                    topToolbar.addView(edittext);
+                }
+                topToolbar.addView(close);
+
+                // Add our topToolbar to our main view/layout
+                main.addView(topToolbar);
+
                 // WebView
                 inAppWebView = new WebView(cordova.getActivity());
-                inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+                inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(0), 1));
                 inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView));
                 WebViewClient client = new InAppBrowserClient(thatWebView, edittext);
                 inAppWebView.setWebViewClient(client);
@@ -682,23 +696,19 @@ public class InAppBrowser extends CordovaPlugin {
                 inAppWebView.requestFocus();
                 inAppWebView.requestFocusFromTouch();
 
-                // Add the back and forward buttons to our action button container layout
-                actionButtonContainer.addView(back);
-                actionButtonContainer.addView(forward);
-
-                // Add the views to our toolbar
-                toolbar.addView(actionButtonContainer);
-                toolbar.addView(edittext);
-                toolbar.addView(close);
-
-                // Don't add the toolbar if its been disabled
-                if (getShowLocationBar()) {
-                    // Add our toolbar to our main view/layout
-                    main.addView(toolbar);
-                }
-
                 // Add our webview to our main view/layout
                 main.addView(inAppWebView);
+
+                // Bottom toolbar layout
+                RelativeLayout bottomToolbar = new RelativeLayout(cordova.getActivity());
+                bottomToolbar.setBackgroundColor(android.graphics.Color.WHITE);
+                bottomToolbar.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44)));
+                bottomToolbar.setPadding(this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2));
+                bottomToolbar.setHorizontalGravity(Gravity.LEFT);
+                bottomToolbar.setVerticalGravity(Gravity.BOTTOM);
+
+                // Add our bottomToolbar to our main view/layout
+                main.addView(bottomToolbar);
 
                 WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
                 lp.copyFrom(dialog.getWindow().getAttributes());
