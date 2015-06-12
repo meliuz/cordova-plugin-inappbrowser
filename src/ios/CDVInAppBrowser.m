@@ -453,7 +453,7 @@
     // We create the views in code for primarily for ease of upgrades and not requiring an external .xib to be included
 
     CGRect webViewBounds = self.view.bounds;
-    webViewBounds.size.height -= TOOLBAR_HEIGHT;
+    webViewBounds.size.height -= [self getStatusBarOffset] + (2 * TOOLBAR_HEIGHT);
     self.webView = [[UIWebView alloc] initWithFrame:webViewBounds];
 
     self.webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
@@ -463,7 +463,6 @@
 
     self.webView.delegate = _webViewDelegate;
     self.webView.backgroundColor = [UIColor whiteColor];
-
     self.webView.clearsContextBeforeDrawing = YES;
     self.webView.clipsToBounds = YES;
     self.webView.contentMode = UIViewContentModeScaleToFill;
@@ -546,12 +545,6 @@
     [self.view addSubview:self.spinner];
 }
 
-- (void) setWebViewFrame : (CGRect) frame {
-    frame = CGRectMake(0.0, TOOLBAR_HEIGHT, self.view.bounds.size.width, self.view.bounds.size.height - (2 * TOOLBAR_HEIGHT));
-    NSLog(@"Setting the WebView's frame to %@", NSStringFromCGRect(frame));
-    [self.webView setFrame:frame];
-}
-
 - (void) setCloseButtonTitle:(NSString *)title {
     self.closeButton = nil;
     self.closeButton = [[UIBarButtonItem alloc] initWithTitle:title style:UIBarButtonItemStyleBordered target:self action:@selector(close)];
@@ -622,6 +615,7 @@
 }
 
 - (void) viewDidLoad {
+    self.checkedVars = NO;
     [super viewDidLoad];
 }
 
@@ -668,12 +662,10 @@
 }
 
 - (void) goBack:(id)sender {
-    NSLog(@"BACK");
     [self.webView goBack];
 }
 
 - (void) goForward:(id)sender {
-    NSLog(@"FORWARD");
     [self.webView goForward];
 }
 
@@ -698,17 +690,40 @@
 }
 
 - (void) rePositionViews {
-    [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, TOOLBAR_HEIGHT, self.webView.frame.size.width, self.webView.frame.size.height)];
+    [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, [self getStatusBarOffset] + TOOLBAR_HEIGHT, self.webView.frame.size.width, self.webView.frame.size.height)];
     [self.topToolbar setFrame:CGRectMake(self.topToolbar.frame.origin.x, [self getStatusBarOffset], self.topToolbar.frame.size.width, self.topToolbar.frame.size.height)];
     [self.bottomToolbar setFrame:CGRectMake(self.bottomToolbar.frame.origin.x, self.view.bounds.size.height - TOOLBAR_HEIGHT, self.bottomToolbar.frame.size.width, self.bottomToolbar.frame.size.height)];
 }
 
 - (void) updateInterface {
+    self.checkedVars = YES;
     NSString *storeTitle = [self.webView stringByEvaluatingJavaScriptFromString:@"window.storeTitle"];
     NSString *cashbackString = [self.webView stringByEvaluatingJavaScriptFromString:@"cashbackString"];
     [self setTitleButtonTitle:storeTitle];
     [self setCashbackButtonTitle:cashbackString];
-    [self.webView stringByEvaluatingJavaScriptFromString:@"redirect()"];
+
+    NSURL *redirectUrl = [NSURL URLWithString:[self.webView stringByEvaluatingJavaScriptFromString:@"redirectUrl"]];
+    [self.webView stopLoading];
+    [self.webView removeFromSuperview];
+    self.webView = nil;
+    CGRect webViewBounds = self.view.bounds;
+    webViewBounds.size.height -= [self getStatusBarOffset] + (2 * TOOLBAR_HEIGHT);
+    self.webView = [[UIWebView alloc] initWithFrame:webViewBounds];
+    self.webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
+    [self.view addSubview:self.webView];
+    [self.view sendSubviewToBack:self.webView];
+    [self rePositionViews];
+    self.webView.delegate = _webViewDelegate;
+    self.webView.backgroundColor = [UIColor whiteColor];
+    self.webView.clearsContextBeforeDrawing = YES;
+    self.webView.clipsToBounds = YES;
+    self.webView.contentMode = UIViewContentModeScaleToFill;
+    self.webView.multipleTouchEnabled = YES;
+    self.webView.opaque = YES;
+    self.webView.scalesPageToFit = NO;
+    self.webView.userInteractionEnabled = YES;
+    NSURLRequest *request = [NSURLRequest requestWithURL:redirectUrl];
+    [self.webView loadRequest:request];
 }
 
 - (void) checkVariables {
