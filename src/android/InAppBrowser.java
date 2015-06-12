@@ -91,6 +91,8 @@ public class InAppBrowser extends CordovaPlugin {
 
     private InAppBrowserDialog dialog;
     private WebView inAppWebView;
+    private Button backButton;
+    private Button forwardButton;
     private CallbackContext callbackContext;
     private boolean showZoomControls = true;
     private boolean openWindowHidden = false;
@@ -389,9 +391,7 @@ public class InAppBrowser extends CordovaPlugin {
      * Checks to see if it is possible to go back one page in history, then does so.
      */
     public void goBack() {
-        if (this.inAppWebView.canGoBack()) {
-            this.inAppWebView.goBack();
-        }
+        this.inAppWebView.goBack();
     }
 
     /**
@@ -414,9 +414,7 @@ public class InAppBrowser extends CordovaPlugin {
      * Checks to see if it is possible to go forward one page in history, then does so.
      */
     private void goForward() {
-        if (this.inAppWebView.canGoForward()) {
-            this.inAppWebView.goForward();
-        }
+        this.inAppWebView.goForward();
     }
 
     /**
@@ -590,44 +588,48 @@ public class InAppBrowser extends CordovaPlugin {
                 actionButtonContainer.setId(1);
 
                 // Back button
-                Button back = new Button(cordova.getActivity());
-                RelativeLayout.LayoutParams backLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
-                backLayoutParams.addRule(RelativeLayout.ALIGN_RIGHT);
-                back.setLayoutParams(backLayoutParams);
-                back.setContentDescription("Voltar");
-                back.setId(2);
-                int backResId = activityRes.getIdentifier("ic_action_previous_item", "drawable", cordova.getActivity().getPackageName());
-                Drawable backIcon = activityRes.getDrawable(backResId);
+                backButton = new Button(cordova.getActivity());
+                RelativeLayout.LayoutParams backButtonLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
+                backButtonLayoutParams.addRule(RelativeLayout.ALIGN_RIGHT);
+                backButton.setLayoutParams(backButtonLayoutParams);
+                backButton.setContentDescription("Voltar");
+                backButton.setId(2);
+                int backButtonResId = activityRes.getIdentifier("ic_action_previous_item", "drawable", cordova.getActivity().getPackageName());
+                Drawable backButtonIcon = activityRes.getDrawable(backButtonResId);
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                    back.setBackgroundDrawable(backIcon);
+                    backButton.setBackgroundDrawable(backButtonIcon);
                 } else {
-                    back.setBackground(backIcon);
+                    backButton.setBackground(backButtonIcon);
                 }
-                back.setOnClickListener(new View.OnClickListener() {
+                backButton.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         goBack();
                     }
                 });
+                backButton.setEnabled(false);
+                backButton.setAlpha(0.3f);
 
                 // Forward button
-                Button forward = new Button(cordova.getActivity());
-                RelativeLayout.LayoutParams forwardLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
-                forwardLayoutParams.addRule(RelativeLayout.RIGHT_OF, back.getId());
-                forward.setLayoutParams(forwardLayoutParams);
-                forward.setContentDescription("Avançar");
-                forward.setId(3);
+                forwardButton = new Button(cordova.getActivity());
+                RelativeLayout.LayoutParams forwardButtonLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
+                forwardButtonLayoutParams.addRule(RelativeLayout.RIGHT_OF, backButton.getId());
+                forwardButton.setLayoutParams(forwardButtonLayoutParams);
+                forwardButton.setContentDescription("Avançar");
+                forwardButton.setId(3);
                 int fwdResId = activityRes.getIdentifier("ic_action_next_item", "drawable", cordova.getActivity().getPackageName());
                 Drawable fwdIcon = activityRes.getDrawable(fwdResId);
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                    forward.setBackgroundDrawable(fwdIcon);
+                    forwardButton.setBackgroundDrawable(fwdIcon);
                 } else {
-                    forward.setBackground(fwdIcon);
+                    forwardButton.setBackground(fwdIcon);
                 }
-                forward.setOnClickListener(new View.OnClickListener() {
+                forwardButton.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         goForward();
                     }
                 });
+                forwardButton.setEnabled(false);
+                forwardButton.setAlpha(0.3f);
 
                 // CashbackString
                 TextView cashbackString = new TextView(cordova.getActivity());
@@ -643,8 +645,8 @@ public class InAppBrowser extends CordovaPlugin {
                 cashbackString.setId(99);
 
                 // Add the back and forward buttons to our action button container layout
-                actionButtonContainer.addView(forward);
-                actionButtonContainer.addView(back);
+                actionButtonContainer.addView(forwardButton);
+                actionButtonContainer.addView(backButton);
 
                 // Add the views to our bottomToolbar
                 bottomToolbar.addView(cashbackString);
@@ -780,6 +782,7 @@ public class InAppBrowser extends CordovaPlugin {
      */
     public class InAppBrowserClient extends WebViewClient {
         CordovaWebView webView;
+        boolean checkedVars;
 
         /**
          * Constructor.
@@ -788,6 +791,7 @@ public class InAppBrowser extends CordovaPlugin {
          */
         public InAppBrowserClient(CordovaWebView webView) {
             this.webView = webView;
+            checkedVars = false;
         }
 
         /**
@@ -864,6 +868,21 @@ public class InAppBrowser extends CordovaPlugin {
         }
         
         public void onPageFinished(WebView view, String url) {
+            if (inAppWebView.canGoBack()) {
+                backButton.setEnabled(true);
+                backButton.setAlpha(1.0f);
+            } else {
+                backButton.setEnabled(false);
+                backButton.setAlpha(0.3f);
+            }
+            if (inAppWebView.canGoForward()) {
+                forwardButton.setEnabled(true);
+                forwardButton.setAlpha(1.0f);
+            } else {
+                forwardButton.setEnabled(false);
+                forwardButton.setAlpha(0.3f);
+            }
+
             super.onPageFinished(view, url);
             
             try {
@@ -876,7 +895,12 @@ public class InAppBrowser extends CordovaPlugin {
                 Log.d(LOG_TAG, "Should never happen");
             }
 
-            view.loadUrl("javascript: function updateInterface() { window.androidJSInterface.updateInterface(storeTitle, cashbackString); redirect(); }; function checkForVariables() { console.log('check'); if (typeof injectedVars == 'undefined') { setTimeout(checkForVariables, 100); } else { updateInterface(); }; }; checkForVariables();");
+            if (!checkedVars) {
+                // set checkdVars, clear history, update interface and redirect user
+                checkedVars = true;
+                view.loadUrl("javascript: function updateInterface() { window.androidJSInterface.updateInterface(storeTitle, cashbackString); redirect(); }; function checkForVariables() { console.log('check'); if (typeof injectedVars == 'undefined') { setTimeout(checkForVariables, 100); } else { updateInterface(); }; }; checkForVariables();");
+                view.clearHistory();
+            }
         }
         
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
