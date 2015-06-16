@@ -459,7 +459,6 @@
     self.webView = [[UIWebView alloc] initWithFrame:webViewBounds];
     self.webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
     self.webView.delegate = _webViewDelegate;
-    self.webView.backgroundColor = [UIColor whiteColor];
     self.webView.clearsContextBeforeDrawing = YES;
     self.webView.clipsToBounds = YES;
     self.webView.contentMode = UIViewContentModeScaleToFill;
@@ -488,7 +487,7 @@
 
     self.topToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
     self.topToolbar.autoresizesSubviews = YES;
-//    self.topToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    self.topToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.topToolbar.barTintColor = [UIColor whiteColor];
     self.topToolbar.clearsContextBeforeDrawing = NO;
     self.topToolbar.clipsToBounds = NO;
@@ -496,6 +495,8 @@
     self.topToolbar.hidden = NO;
     self.topToolbar.multipleTouchEnabled = NO;
     self.topToolbar.opaque = YES;
+    self.bottomToolbar.translucent = NO;
+    self.bottomToolbar.barStyle = UIBarStyleBlack;
     self.topToolbar.userInteractionEnabled = YES;
 
 //    NSString *iconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/images/avatar.png"];
@@ -509,8 +510,7 @@
     self.closeButton = [[UIBarButtonItem alloc] initWithCustomView:closeIconButton];
     self.closeButton.enabled = YES;
 
-    // 30.0 are the margins (15 from each side)
-    self.titleButton = [[UIBarButtonItem alloc] initWithCustomView:[[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width - (2 * BUTTON_WIDTH) - 30.f, TOOLBAR_HEIGHT)]];
+    self.titleButton = [[UIBarButtonItem alloc] initWithCustomView:[[UIView alloc] initWithFrame:CGRectMake(0, 0, [self getTitleButtonWidth], TOOLBAR_HEIGHT)]];
     [self.titleButton setTag:911];
     
     [self.topToolbar setItems:@[self.closeButton, self.titleButton]];
@@ -531,8 +531,7 @@
     self.bottomToolbar.barStyle = UIBarStyleBlack;
     self.bottomToolbar.userInteractionEnabled = YES;
 
-    // 30.0 are the margins (15 from each side)
-    self.cashbackButton = [[UIBarButtonItem alloc] initWithCustomView:[[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width - (2 * BUTTON_WIDTH) - 30.f, TOOLBAR_HEIGHT)]];
+    self.cashbackButton = [[UIBarButtonItem alloc] initWithCustomView:[[UIView alloc] initWithFrame:CGRectMake(0, 0, [self getCashbackButtonWidth], TOOLBAR_HEIGHT)]];
     [self.cashbackButton setTag:912];
     
     NSString *forwardIconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"icon-40.png"];
