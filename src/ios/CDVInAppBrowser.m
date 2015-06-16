@@ -20,6 +20,7 @@
 #import "CDVInAppBrowser.h"
 #import <Cordova/CDVPluginResult.h>
 #import <Cordova/CDVUserAgentUtil.h>
+#import <CoreText/CoreText.h>
 
 #define    kInAppBrowserTargetSelf @"_self"
 #define    kInAppBrowserTargetSystem @"_system"
@@ -27,6 +28,7 @@
 
 #define    TOOLBAR_HEIGHT 55.0
 #define    BUTTON_WIDTH 40.0
+#define    GAP_WIDTH 10.0
 #define    MELIUZ_RED [UIColor colorWithRed:241.0 / 255.0 green:57.0 / 255.0 blue:0.0 / 255.0 alpha:1];
 
 #pragma mark CDVInAppBrowser
@@ -455,12 +457,7 @@
     CGRect webViewBounds = self.view.bounds;
     webViewBounds.size.height -= 2 * TOOLBAR_HEIGHT;
     self.webView = [[UIWebView alloc] initWithFrame:webViewBounds];
-
     self.webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
-
-    [self.view addSubview:self.webView];
-    [self.view sendSubviewToBack:self.webView];
-
     self.webView.delegate = _webViewDelegate;
     self.webView.backgroundColor = [UIColor whiteColor];
     self.webView.clearsContextBeforeDrawing = YES;
@@ -470,6 +467,9 @@
     self.webView.opaque = YES;
     self.webView.scalesPageToFit = NO;
     self.webView.userInteractionEnabled = YES;
+    
+    [self.view addSubview:self.webView];
+    [self.view sendSubviewToBack:self.webView];
 
     self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
     self.spinner.alpha = 1.000;
@@ -487,9 +487,8 @@
     [self.spinner stopAnimating];
 
     self.topToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
-    self.topToolbar.alpha = 1.0;
     self.topToolbar.autoresizesSubviews = YES;
-    self.topToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+//    self.topToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.topToolbar.barTintColor = [UIColor whiteColor];
     self.topToolbar.clearsContextBeforeDrawing = NO;
     self.topToolbar.clipsToBounds = NO;
@@ -499,8 +498,15 @@
     self.topToolbar.opaque = YES;
     self.topToolbar.userInteractionEnabled = YES;
 
-    self.closeButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemTrash target:self action:@selector(close)];
-    self.closeButton.width = BUTTON_WIDTH;
+//    NSString *iconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/images/avatar.png"];
+    NSString *closeIconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"icon-40.png"];
+    UIImage *closeIcon = [UIImage imageWithContentsOfFile:closeIconPath];
+    UIButton *closeIconButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [closeIconButton addTarget:self action:@selector(close) forControlEvents:UIControlEventTouchUpInside];
+    closeIconButton.bounds = CGRectMake(0, 0, closeIcon.size.width, closeIcon.size.height);
+    [closeIconButton setImage:closeIcon forState:UIControlStateNormal];
+    [closeIconButton setBackgroundColor:[UIColor redColor]];
+    self.closeButton = [[UIBarButtonItem alloc] initWithCustomView:closeIconButton];
     self.closeButton.enabled = YES;
 
     // 30.0 are the margins (15 from each side)
@@ -512,7 +518,6 @@
     [self setTitleButtonTitle:@"CARREGANDO..."];
 
     self.bottomToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, self.view.bounds.size.height - TOOLBAR_HEIGHT, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
-    self.bottomToolbar.alpha = 1.0;
     self.bottomToolbar.autoresizesSubviews = YES;
     self.bottomToolbar.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin);
     self.bottomToolbar.barTintColor = [UIColor whiteColor];
@@ -522,23 +527,37 @@
     self.bottomToolbar.hidden = NO;
     self.bottomToolbar.multipleTouchEnabled = NO;
     self.bottomToolbar.opaque = YES;
+    self.bottomToolbar.translucent = NO;
+    self.bottomToolbar.barStyle = UIBarStyleBlack;
     self.bottomToolbar.userInteractionEnabled = YES;
 
     // 30.0 are the margins (15 from each side)
     self.cashbackButton = [[UIBarButtonItem alloc] initWithCustomView:[[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width - (2 * BUTTON_WIDTH) - 30.f, TOOLBAR_HEIGHT)]];
     [self.cashbackButton setTag:912];
     
-    self.forwardButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFastForward target:self action:@selector(goForward:)];
-    self.forwardButton.width = BUTTON_WIDTH;
+    NSString *forwardIconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"icon-40.png"];
+    UIImage *forwardIcon = [UIImage imageWithContentsOfFile:forwardIconPath];
+    UIButton *forwardIconButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [forwardIconButton addTarget:self action:@selector(goForward:) forControlEvents:UIControlEventTouchUpInside];
+    forwardIconButton.bounds = CGRectMake(0, 0, forwardIcon.size.width, forwardIcon.size.height);
+    [forwardIconButton setImage:forwardIcon forState:UIControlStateNormal];
+    [forwardIconButton setBackgroundColor:[UIColor redColor]];
+    self.forwardButton = [[UIBarButtonItem alloc] initWithCustomView:forwardIconButton];
     
-    self.backButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRewind target:self action:@selector(goBack:)];
-    self.backButton.width = BUTTON_WIDTH;
+    NSString *backIconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"icon-40.png"];
+    UIImage *backIcon = [UIImage imageWithContentsOfFile:backIconPath];
+    UIButton *backIconButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [backIconButton addTarget:self action:@selector(goBack:) forControlEvents:UIControlEventTouchUpInside];
+    backIconButton.bounds = CGRectMake(0, 0, backIcon.size.width, backIcon.size.height);
+    [backIconButton setImage:backIcon forState:UIControlStateNormal];
+    [backIconButton setBackgroundColor:[UIColor redColor]];
+    self.backButton = [[UIBarButtonItem alloc] initWithCustomView:backIconButton];
     
     [self.bottomToolbar setItems:@[self.cashbackButton, self.backButton, self.forwardButton]];
 
     [self setCashbackButtonTitle:@""];
 
-    self.view.backgroundColor = [UIColor grayColor];
+    self.view.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:self.topToolbar];
     [self.view addSubview:self.bottomToolbar];
     [self.view addSubview:self.spinner];
@@ -556,8 +575,8 @@
 }
 
 - (CGFloat)getTitleButtonWidth {
-    // 30.0 are the margins (15 from each side)
-    return self.topToolbar.frame.size.width - (2 * BUTTON_WIDTH) - 30.f;
+    // 15 is the bar inner padding
+    return self.topToolbar.frame.size.width - (2 * BUTTON_WIDTH) - (2 * 15.f) - (2 * GAP_WIDTH);
 }
 
 - (void)setTitleButtonTitle:(NSString *)title {
@@ -566,7 +585,18 @@
     titleLabel.text = [title uppercaseString];
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.textColor = MELIUZ_RED;
-    titleLabel.font = [UIFont systemFontOfSize:19.0];
+    
+    NSString *fpath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/fonts/source-sans/SourceSansPro-Regular.ttf"];
+    CGDataProviderRef fontDataProvider = CGDataProviderCreateWithFilename([fpath UTF8String]);
+    CGFontRef customFont = CGFontCreateWithDataProvider(fontDataProvider);
+    CGDataProviderRelease(fontDataProvider);
+    NSString *fontName = (__bridge NSString *)CGFontCopyFullName(customFont);
+    CFErrorRef error;
+    CTFontManagerRegisterGraphicsFont(customFont, &error);
+    CGFontRelease(customFont);
+    UIFont *uifont = [UIFont fontWithName:fontName size:19];
+    
+    titleLabel.font = uifont;
     self.titleButton = [[UIBarButtonItem alloc] initWithCustomView:titleLabel];
     [self.titleButton setTag:911];
 
@@ -576,8 +606,8 @@
 }
 
 - (CGFloat)getCashbackButtonWidth {
-    // 30.0 are the margins (15 from each side)
-    return self.bottomToolbar.frame.size.width - (2 * BUTTON_WIDTH) - 30.f;
+    // 15 is the bar inner padding
+    return self.bottomToolbar.frame.size.width - (2 * BUTTON_WIDTH) - (2 * 15.f) - (2 * GAP_WIDTH);
 }
 
 - (void)setCashbackButtonTitle:(NSString *)title {
@@ -585,7 +615,18 @@
     titleLabel.text = title;
     titleLabel.textAlignment = NSTextAlignmentLeft;
     titleLabel.textColor = MELIUZ_RED;
-    titleLabel.font = [UIFont systemFontOfSize:19.0];
+    
+    NSString *fpath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/fonts/source-sans/SourceSansPro-Regular.ttf"];
+    CGDataProviderRef fontDataProvider = CGDataProviderCreateWithFilename([fpath UTF8String]);
+    CGFontRef customFont = CGFontCreateWithDataProvider(fontDataProvider);
+    CGDataProviderRelease(fontDataProvider);
+    NSString *fontName = (__bridge NSString *)CGFontCopyFullName(customFont);
+    CFErrorRef error;
+    CTFontManagerRegisterGraphicsFont(customFont, &error);
+    CGFontRelease(customFont);
+    UIFont *uifont = [UIFont fontWithName:fontName size:19];
+    
+    titleLabel.font = uifont;
     self.cashbackButton = [[UIBarButtonItem alloc] initWithCustomView:titleLabel];
     [self.cashbackButton setTag:912];
 
