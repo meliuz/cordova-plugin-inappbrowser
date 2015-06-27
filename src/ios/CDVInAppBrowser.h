@@ -85,6 +85,7 @@
 @property (nonatomic, strong) IBOutlet UILabel* addressLabel;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* closeButton;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* titleButton;
+@property (nonatomic, strong) IBOutlet UIBarButtonItem* codeButton;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* cashbackButton;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* backButton;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* forwardButton;
@@ -98,7 +99,6 @@
 
 - (void)close;
 - (void)navigateTo:(NSURL*)url;
-- (void)setCloseButtonTitle:(NSString*)title;
 
 - (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVInAppBrowserOptions*) browserOptions;
 
