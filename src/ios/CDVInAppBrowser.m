@@ -26,11 +26,11 @@
 #define    kInAppBrowserTargetSystem @"_system"
 #define    kInAppBrowserTargetBlank @"_blank"
 
-#define    TOOLBAR_HEIGHT 55.0
-#define    BUTTON_WIDTH 48.0
-#define    GAP_WIDTH 10.0
-#define    PADDING_WIDTH 15.0
-#define    MELIUZ_RED [UIColor colorWithRed:241.0 / 255.0 green:57.0 / 255.0 blue:0.0 / 255.0 alpha:1];
+#define    TOOLBAR_HEIGHT 55.f
+#define    BUTTON_WIDTH 48.f
+#define    GAP_WIDTH 10.f
+#define    PADDING_WIDTH 15.f
+#define    MELIUZ_RED [UIColor colorWithRed:241.f / 255.f green:57.f / 255.f blue:0.f / 255.f alpha:1];
 
 #pragma mark CDVInAppBrowser
 
@@ -468,14 +468,14 @@
     [self.view addSubview:self.webView];
     [self.view sendSubviewToBack:self.webView];
 
-    self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
-    self.spinner.alpha = 1.000;
+    self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    self.spinner.alpha = 1.f;
     self.spinner.autoresizesSubviews = YES;
     self.spinner.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin;
     self.spinner.clearsContextBeforeDrawing = NO;
     self.spinner.clipsToBounds = NO;
     self.spinner.contentMode = UIViewContentModeScaleToFill;
-    self.spinner.frame = CGRectMake(454.0, 231.0, 20.0, 20.0);
+    self.spinner.frame = CGRectMake((self.webView.bounds.size.width - 20.f) / 2, (self.webView.bounds.size.height - 20.f) / 2, 20.f, 20.f);
     self.spinner.hidden = YES;
     self.spinner.hidesWhenStopped = YES;
     self.spinner.multipleTouchEnabled = NO;
@@ -483,7 +483,7 @@
     self.spinner.userInteractionEnabled = NO;
     [self.spinner stopAnimating];
 
-    self.topToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
+    self.topToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.f, 0.f, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
     self.topToolbar.autoresizesSubviews = YES;
     self.topToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.topToolbar.barTintColor = [UIColor whiteColor];
@@ -516,7 +516,7 @@
 
     [self setTitleButtonTitle:@"CARREGANDO..."];
 
-    self.bottomToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, self.view.bounds.size.height - TOOLBAR_HEIGHT, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
+    self.bottomToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.f, self.view.bounds.size.height - TOOLBAR_HEIGHT, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
     self.bottomToolbar.autoresizesSubviews = YES;
     self.bottomToolbar.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin);
     self.bottomToolbar.barTintColor = [UIColor whiteColor];
@@ -555,7 +555,7 @@
     
     [self.bottomToolbar setItems:@[self.cashbackButton, self.backButton, self.forwardButton]];
 
-    [self setCashbackButtonTitle:@""];
+    [self setCashbackButtonTitle:@"" mobileFriendly:NO];
 
     self.view.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:self.topToolbar];
@@ -564,8 +564,6 @@
 }
 
 - (CGFloat)getTitleButtonWidth {
-    NSLog(@"TOP: %f", self.topToolbar.frame.size.width);
-    NSLog(@"TITLE: %f", self.topToolbar.frame.size.width - (2 * BUTTON_WIDTH) - (2 * PADDING_WIDTH) - (2 * GAP_WIDTH));
     return self.topToolbar.frame.size.width - (2 * BUTTON_WIDTH) - (2 * PADDING_WIDTH) - (2 * GAP_WIDTH);
 }
 
@@ -598,19 +596,13 @@
 }
 
 - (CGFloat)getCashbackButtonWidth {
-    NSLog(@"BOTTOM: %f", self.bottomToolbar.frame.size.width);
-    NSLog(@"CASHBACK: %f", self.bottomToolbar.frame.size.width - (2 * BUTTON_WIDTH) - (2 * PADDING_WIDTH) - (2 * GAP_WIDTH));
     return self.bottomToolbar.frame.size.width - (2 * BUTTON_WIDTH) - (2 * PADDING_WIDTH) - (2 * GAP_WIDTH);
 }
 
-- (void)setCashbackButtonTitle:(NSString *)title {
+- (void)setCashbackButtonTitle:(NSString *)title mobileFriendly:(BOOL)mobileFriendly {
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, [self getCashbackButtonWidth], TOOLBAR_HEIGHT)];
-    titleLabel.text = title;
-    titleLabel.textAlignment = NSTextAlignmentLeft;
-    titleLabel.textColor = MELIUZ_RED;
-    titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    // titleLabel.backgroundColor = [UIColor yellowColor];
-    
+
+    // load font from file
     NSString *fpath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/fonts/source-sans/SourceSansPro-Regular.ttf"];
     CGDataProviderRef fontDataProvider = CGDataProviderCreateWithFilename([fpath UTF8String]);
     CGFontRef customFont = CGFontCreateWithDataProvider(fontDataProvider);
@@ -620,8 +612,20 @@
     CTFontManagerRegisterGraphicsFont(customFont, &error);
     CGFontRelease(customFont);
     UIFont *uifont = [UIFont fontWithName:fontName size:19];
+
+    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:title];
+    [attributedString addAttribute:NSFontAttributeName value:uifont range:NSMakeRange(0, [attributedString length])];
+    [attributedString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithRed:241.f / 255.f green:57.f / 255.f blue:0.f / 255.f alpha:1] range:NSMakeRange(0, [attributedString length])];
+    if (!mobileFriendly) {
+        // strike through text
+        [attributedString addAttribute:NSStrikethroughStyleAttributeName value:@(NSUnderlineStyleSingle) range:NSMakeRange(0, [attributedString length])];
+        [attributedString addAttribute:NSForegroundColorAttributeName value:[UIColor grayColor] range:NSMakeRange(0, [attributedString length])];
+    }
+    titleLabel.attributedText = attributedString;
+    titleLabel.textAlignment = NSTextAlignmentLeft;
+    titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    // titleLabel.backgroundColor = [UIColor yellowColor];
     
-    titleLabel.font = uifont;
     self.cashbackButton = [[UIBarButtonItem alloc] initWithCustomView:titleLabel];
     [self.cashbackButton setTag:912];
 
@@ -714,7 +718,7 @@
 //
 - (float)getStatusBarOffset {
     CGRect statusBarFrame = [[UIApplication sharedApplication] statusBarFrame];
-    float statusBarOffset = IsAtLeastiOSVersion(@"7.0") ? MIN(statusBarFrame.size.width, statusBarFrame.size.height) : 0.0;
+    float statusBarOffset = IsAtLeastiOSVersion(@"7.0") ? MIN(statusBarFrame.size.width, statusBarFrame.size.height) : 0.f;
     return statusBarOffset;
 }
 
@@ -725,11 +729,12 @@
 }
 
 - (void)updateInterface {
-    NSString *storeTitle = [self.webView stringByEvaluatingJavaScriptFromString:@"window.storeTitle"];
-    NSString *cashbackString = [self.webView stringByEvaluatingJavaScriptFromString:@"window.cashbackString"];
-    NSString *couponCode = [self.webView stringByEvaluatingJavaScriptFromString:@"window.couponCode"];
+    BOOL mobileFriendly = [[self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.mobileFriendly"] isEqualToString:@"true"];
+    NSString *storeTitle = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.storeTitle"];
+    NSString *cashbackString = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.cashbackString"];
+    NSString *couponCode = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.couponCode"];
     [self setTitleButtonTitle:storeTitle];
-    [self setCashbackButtonTitle:cashbackString];
+    [self setCashbackButtonTitle:cashbackString mobileFriendly:mobileFriendly];
     if ([couponCode length] > 0) {
         [self showCodeButton];
     }
