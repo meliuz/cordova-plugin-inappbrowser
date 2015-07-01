@@ -619,7 +619,7 @@
     if (!mobileFriendly) {
         // strike through text
         [attributedString addAttribute:NSStrikethroughStyleAttributeName value:@(NSUnderlineStyleSingle) range:NSMakeRange(0, [attributedString length])];
-        [attributedString addAttribute:NSForegroundColorAttributeName value:[UIColor grayColor] range:NSMakeRange(0, [attributedString length])];
+        [attributedString addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithRed:153.f / 255.f green:153.f / 255.f blue:153.f / 255.f alpha:1] range:NSMakeRange(0, [attributedString length])];
     }
     titleLabel.attributedText = attributedString;
     titleLabel.textAlignment = NSTextAlignmentLeft;
