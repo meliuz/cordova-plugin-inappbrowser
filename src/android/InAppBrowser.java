@@ -27,6 +27,7 @@ import android.content.res.Resources;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -67,11 +68,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.StringTokenizer;
+import java.io.InputStream;
+import java.io.IOException;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class InAppBrowser extends CordovaPlugin {
 
     private static final int TOUCH_SIZE = 48;
+    private static final int TOOLBAR_HEIGHT = 56;
     private static final int TOOLBAR_PADDING = 6;
 
     private static final String NULL = "null";
@@ -91,6 +95,10 @@ public class InAppBrowser extends CordovaPlugin {
 
     private InAppBrowserDialog dialog;
     private WebView inAppWebView;
+    private TextView titleView;
+    private TextView cashbackView;
+    private Button closeButton;
+    private Button couponCodeButton;
     private Button backButton;
     private Button forwardButton;
     private CallbackContext callbackContext;
@@ -514,8 +522,6 @@ public class InAppBrowser extends CordovaPlugin {
                 // Main activity resources
                 Resources activityRes = cordova.getActivity().getResources();
 
-                int displayWidth = cordova.getActivity().getApplicationContext().getResources().getDisplayMetrics().widthPixels;
-
                 /**
                  *
                  * ================= TOP TOOLBAR =================
@@ -524,47 +530,86 @@ public class InAppBrowser extends CordovaPlugin {
                 LinearLayout topToolbar = new LinearLayout(cordova.getActivity());
                 topToolbar.setOrientation(LinearLayout.HORIZONTAL);
                 topToolbar.setBackgroundColor(android.graphics.Color.WHITE);
-                topToolbar.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(TOUCH_SIZE)));
+                topToolbar.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(TOOLBAR_HEIGHT)));
                 topToolbar.setPadding(this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(TOOLBAR_PADDING));
                 topToolbar.setHorizontalGravity(Gravity.LEFT);
-                topToolbar.setVerticalGravity(Gravity.TOP);
+                topToolbar.setVerticalGravity(Gravity.CENTER);
 
                 // Close/Done button
-                Button close = new Button(cordova.getActivity());
-                RelativeLayout.LayoutParams closeLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
-                closeLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-                close.setLayoutParams(closeLayoutParams);
-                close.setContentDescription("Fechar");
-                close.setId(5);
-                int closeResId = activityRes.getIdentifier("ic_action_remove", "drawable", cordova.getActivity().getPackageName());
-                Drawable closeIcon = activityRes.getDrawable(closeResId);
-                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                    close.setBackgroundDrawable(closeIcon);
-                } else {
-                    close.setBackground(closeIcon);
+                closeButton = new Button(cordova.getActivity());
+                RelativeLayout.LayoutParams closeButtonLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
+                closeButtonLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                closeButton.setLayoutParams(closeButtonLayoutParams);
+                closeButton.setContentDescription("Fechar");
+                closeButton.setId(5);
+                int closeButtonResId = activityRes.getIdentifier("ic_action_remove", "drawable", cordova.getActivity().getPackageName());
+                Drawable closeButtonIcon = activityRes.getDrawable(closeButtonResId);
+                try {
+                    // get input stream
+                    InputStream ims = cordova.getActivity().getAssets().open("www/assets/images/icon-close@3x.png");
+                    // load image as Drawable
+                    closeButtonIcon = Drawable.createFromStream(ims, null);
+                } catch (IOException e) {
+                    // ...
                 }
-                close.setOnClickListener(new View.OnClickListener() {
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                    closeButton.setBackgroundDrawable(closeButtonIcon);
+                } else {
+                    closeButton.setBackground(closeButtonIcon);
+                }
+                closeButton.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         closeDialog();
                     }
                 });
 
                 // Title
-                TextView title = new TextView(cordova.getActivity());
-                RelativeLayout.LayoutParams titleLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-                titleLayoutParams.addRule(RelativeLayout.RIGHT_OF, close.getId());
-                title.setLayoutParams(titleLayoutParams);
-                title.setPadding(this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0), this.dpToPixels(TOUCH_SIZE + TOOLBAR_PADDING), this.dpToPixels(0));
-                title.setText("CARREGANDO...");
-                title.setGravity(Gravity.CENTER);
-                title.setTextSize(19);
-                title.setTypeface(Typeface.createFromAsset(cordova.getActivity().getApplicationContext().getAssets(), "www/assets/fonts/roboto/roboto-medium-webfont.ttf"));
-                title.setTextColor(android.graphics.Color.parseColor("#F13900"));
-                title.setContentDescription("");
+                titleView = new TextView(cordova.getActivity());
+                RelativeLayout.LayoutParams titleViewLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+                titleViewLayoutParams.addRule(RelativeLayout.RIGHT_OF, closeButton.getId());
+                titleView.setLayoutParams(titleViewLayoutParams);
+                titleView.setPadding(this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0), this.dpToPixels(TOUCH_SIZE + TOOLBAR_PADDING), this.dpToPixels(0));
+                titleView.setText("CARREGANDO...");
+                titleView.setGravity(Gravity.CENTER);
+                titleView.setTextSize(19);
+                titleView.setTypeface(Typeface.createFromAsset(cordova.getActivity().getApplicationContext().getAssets(), "www/assets/fonts/source-sans/SourceSansPro-Regular.ttf"));
+                titleView.setTextColor(android.graphics.Color.parseColor("#F13900"));
+                titleView.setContentDescription("");
+
+                // Coupon code button
+                couponCodeButton = new Button(cordova.getActivity());
+                RelativeLayout.LayoutParams couponCodeButtonLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
+                couponCodeButtonLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                couponCodeButton.setLayoutParams(couponCodeButtonLayoutParams);
+                couponCodeButton.setContentDescription("Fechar");
+                couponCodeButton.setId(5);
+                int couponCodeButtonResId = activityRes.getIdentifier("ic_action_remove", "drawable", cordova.getActivity().getPackageName());
+                Drawable couponCodeButtonIcon = activityRes.getDrawable(couponCodeButtonResId);
+                try {
+                    // get input stream
+                    InputStream ims = cordova.getActivity().getAssets().open("www/assets/images/icon-code@3x.png");
+                    // load image as Drawable
+                    couponCodeButtonIcon = Drawable.createFromStream(ims, null);
+                } catch (IOException e) {
+                    // ...
+                }
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                    couponCodeButton.setBackgroundDrawable(couponCodeButtonIcon);
+                } else {
+                    couponCodeButton.setBackground(couponCodeButtonIcon);
+                }
+                couponCodeButton.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        closeDialog();
+                    }
+                });
+                couponCodeButton.setEnabled(false);
+                couponCodeButton.setAlpha(0.0f);
 
                 // Add the views to our topToolbar
-                topToolbar.addView(close);
-                topToolbar.addView(title);
+                topToolbar.addView(closeButton);
+                topToolbar.addView(titleView);
+                topToolbar.addView(couponCodeButton);
 
                 /**
                  *
@@ -574,10 +619,10 @@ public class InAppBrowser extends CordovaPlugin {
                 LinearLayout bottomToolbar = new LinearLayout(cordova.getActivity());
                 bottomToolbar.setOrientation(LinearLayout.HORIZONTAL);
                 bottomToolbar.setBackgroundColor(android.graphics.Color.WHITE);
-                bottomToolbar.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(TOUCH_SIZE)));
+                bottomToolbar.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(TOOLBAR_HEIGHT)));
                 bottomToolbar.setPadding(this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(TOOLBAR_PADDING));
                 bottomToolbar.setHorizontalGravity(Gravity.LEFT);
-                bottomToolbar.setVerticalGravity(Gravity.TOP);
+                bottomToolbar.setVerticalGravity(Gravity.CENTER);
 
                 // Action Button Container layout
                 RelativeLayout actionButtonContainer = new RelativeLayout(cordova.getActivity());
@@ -596,6 +641,14 @@ public class InAppBrowser extends CordovaPlugin {
                 backButton.setId(2);
                 int backButtonResId = activityRes.getIdentifier("ic_action_previous_item", "drawable", cordova.getActivity().getPackageName());
                 Drawable backButtonIcon = activityRes.getDrawable(backButtonResId);
+                try {
+                    // get input stream
+                    InputStream ims = cordova.getActivity().getAssets().open("www/assets/images/icon-back@3x.png");
+                    // load image as Drawable
+                    backButtonIcon = Drawable.createFromStream(ims, null);
+                } catch (IOException e) {
+                    // ...
+                }
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
                     backButton.setBackgroundDrawable(backButtonIcon);
                 } else {
@@ -616,12 +669,20 @@ public class InAppBrowser extends CordovaPlugin {
                 forwardButton.setLayoutParams(forwardButtonLayoutParams);
                 forwardButton.setContentDescription("Avançar");
                 forwardButton.setId(3);
-                int fwdResId = activityRes.getIdentifier("ic_action_next_item", "drawable", cordova.getActivity().getPackageName());
-                Drawable fwdIcon = activityRes.getDrawable(fwdResId);
+                int forwardButtonResId = activityRes.getIdentifier("ic_action_next_item", "drawable", cordova.getActivity().getPackageName());
+                Drawable forwardButtonIcon = activityRes.getDrawable(forwardButtonResId);
+                try {
+                    // get input stream
+                    InputStream ims = cordova.getActivity().getAssets().open("www/assets/images/icon-forward@3x.png");
+                    // load image as Drawable
+                    forwardButtonIcon = Drawable.createFromStream(ims, null);
+                } catch (IOException e) {
+                    // ...
+                }
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                    forwardButton.setBackgroundDrawable(fwdIcon);
+                    forwardButton.setBackgroundDrawable(forwardButtonIcon);
                 } else {
-                    forwardButton.setBackground(fwdIcon);
+                    forwardButton.setBackground(forwardButtonIcon);
                 }
                 forwardButton.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
@@ -631,25 +692,25 @@ public class InAppBrowser extends CordovaPlugin {
                 forwardButton.setEnabled(false);
                 forwardButton.setAlpha(0.3f);
 
-                // CashbackString
-                TextView cashbackString = new TextView(cordova.getActivity());
-                LinearLayout.LayoutParams cashbackStringLayoutParams = new LinearLayout.LayoutParams(this.dpToPixels(0), LayoutParams.MATCH_PARENT, 1);
-                cashbackString.setLayoutParams(cashbackStringLayoutParams);
-                cashbackString.setPadding(this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0), this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0));
-                cashbackString.setText("");
-                cashbackString.setGravity(Gravity.LEFT | Gravity.CENTER);
-                cashbackString.setTextSize(19);
-                cashbackString.setTypeface(Typeface.createFromAsset(cordova.getActivity().getApplicationContext().getAssets(), "www/assets/fonts/roboto/roboto-medium-webfont.ttf"));
-                cashbackString.setTextColor(android.graphics.Color.parseColor("#F13900"));
-                cashbackString.setContentDescription("");
-                cashbackString.setId(99);
+                // CashbackView
+                cashbackView = new TextView(cordova.getActivity());
+                LinearLayout.LayoutParams cashbackViewLayoutParams = new LinearLayout.LayoutParams(this.dpToPixels(0), LayoutParams.MATCH_PARENT, 1);
+                cashbackView.setLayoutParams(cashbackViewLayoutParams);
+                cashbackView.setPadding(this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0), this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0));
+                cashbackView.setText("");
+                cashbackView.setGravity(Gravity.LEFT | Gravity.CENTER);
+                cashbackView.setTextSize(19);
+                cashbackView.setTypeface(Typeface.createFromAsset(cordova.getActivity().getApplicationContext().getAssets(), "www/assets/fonts/source-sans/SourceSansPro-Regular.ttf"));
+                cashbackView.setTextColor(android.graphics.Color.parseColor("#FF4D4D"));
+                cashbackView.setContentDescription("");
+                cashbackView.setId(99);
 
                 // Add the back and forward buttons to our action button container layout
                 actionButtonContainer.addView(forwardButton);
                 actionButtonContainer.addView(backButton);
 
                 // Add the views to our bottomToolbar
-                bottomToolbar.addView(cashbackString);
+                bottomToolbar.addView(cashbackView);
                 bottomToolbar.addView(actionButtonContainer);
 
                 /**
@@ -658,7 +719,7 @@ public class InAppBrowser extends CordovaPlugin {
                  *
                  **/
                 inAppWebView = new WebView(cordova.getActivity());
-                inAppWebView.addJavascriptInterface(new AndroidJavaScriptInterface(title, cashbackString), "androidJSInterface");
+                inAppWebView.addJavascriptInterface(new AndroidJavaScriptInterface(titleView, cashbackView, couponCodeButton), "androidJSInterface");
                 inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(0), 1));
                 inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView));
                 WebViewClient client = new InAppBrowserClient(thatWebView);
@@ -746,32 +807,45 @@ public class InAppBrowser extends CordovaPlugin {
 
     /* An instance of this class will be registered as a JavaScript interface */
     public class AndroidJavaScriptInterface {
-        private TextView title;
-        private TextView cashbackString;
+        private TextView titleView;
+        private TextView cashbackView;
+        private Button couponCodeButton;
 
         /**
          * Constructor.
          *
          * @param TextView title
          */
-        public AndroidJavaScriptInterface(TextView title, TextView cashbackString) {
-            this.title = title;
-            this.cashbackString = cashbackString;
+        public AndroidJavaScriptInterface(TextView titleView, TextView cashbackView, Button couponCodeButton) {
+            this.titleView = titleView;
+            this.cashbackView = cashbackView;
+            this.couponCodeButton = couponCodeButton;
         }
 
         @JavascriptInterface
-        public void updateInterface(final String title, final String cashbackString) {
-            final TextView titleView = this.title;
-            final TextView cashbackStringView = this.cashbackString;
+        public void updateInterface(final String titleString, final String cashbackString, final String couponCodeString, final String mobileFriendlyString) {
+            final TextView titleView = this.titleView;
+            final TextView cashbackView = this.cashbackView;
+            final Button couponCodeButton = this.couponCodeButton;
+            
             // when updating UI, needs to run on UI Thread
             // http://stackoverflow.com/a/17230947/165233
             cordova.getActivity().runOnUiThread(new Runnable() {
                 public void run() {
-                    titleView.setText(title);
-                    titleView.setContentDescription(title);
+                    titleView.setText(titleString.toUpperCase());
+                    titleView.setContentDescription(titleString);
 
-                    cashbackStringView.setText(cashbackString);
-                    cashbackStringView.setContentDescription(cashbackString);
+                    cashbackView.setText(cashbackString);
+                    cashbackView.setContentDescription(cashbackString);
+                    if (mobileFriendlyString.equals("false")) {
+                        cashbackView.setTextColor(android.graphics.Color.parseColor("#999999"));
+                        cashbackView.setPaintFlags(cashbackView.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                    }
+
+                    if (!couponCodeString.equals("")) {
+                        couponCodeButton.setEnabled(true);
+                        couponCodeButton.setAlpha(1.0f);
+                    }
                 }
             });
         }
@@ -898,7 +972,7 @@ public class InAppBrowser extends CordovaPlugin {
             if (!checkedVars) {
                 // set checkdVars, clear history, update interface and redirect user
                 checkedVars = true;
-                // view.loadUrl("javascript: window.androidJSInterface.updateInterface(storeTitle, cashbackString);");
+                view.loadUrl("javascript: window.androidJSInterface.updateInterface(window.meliuz.storeTitle, window.meliuz.cashbackString, window.meliuz.couponCode, window.meliuz.mobileFriendly);");
                 view.clearHistory();
             }
         }
