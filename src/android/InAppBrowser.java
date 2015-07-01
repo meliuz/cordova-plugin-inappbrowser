@@ -898,7 +898,7 @@ public class InAppBrowser extends CordovaPlugin {
             if (!checkedVars) {
                 // set checkdVars, clear history, update interface and redirect user
                 checkedVars = true;
-                view.loadUrl("javascript: function updateInterface() { window.androidJSInterface.updateInterface(storeTitle, cashbackString); redirect(); }; function checkForVariables() { console.log('check'); if (typeof injectedVars == 'undefined') { setTimeout(checkForVariables, 100); } else { updateInterface(); }; }; checkForVariables();");
+                // view.loadUrl("javascript: window.androidJSInterface.updateInterface(storeTitle, cashbackString);");
                 view.clearHistory();
             }
         }
