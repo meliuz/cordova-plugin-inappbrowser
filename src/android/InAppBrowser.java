@@ -22,6 +22,7 @@ import android.annotation.SuppressLint;
 import org.apache.cordova.inappbrowser.InAppBrowserDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.DialogInterface;
 import android.provider.Browser;
 import android.content.res.Resources;
 import android.content.res.AssetManager;
@@ -52,6 +53,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.app.AlertDialog;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.Config;
@@ -82,7 +84,7 @@ public class InAppBrowser extends CordovaPlugin {
     protected static final String LOG_TAG = "InAppBrowser";
     private static final String SELF = "_self";
     private static final String SYSTEM = "_system";
-    // private static final String BLANK = "_blank";
+    private static final String BLANK = "_blank";
     private static final String EXIT_EVENT = "exit";
     private static final String ZOOM = "zoom";
     private static final String HIDDEN = "hidden";
@@ -92,6 +94,7 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String CLEAR_ALL_CACHE = "clearcache";
     private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
     private static final String HARDWARE_BACK_BUTTON = "hardwareback";
+    private static final String REDIRECT_INTERFACE = "meliuzredirectinterface";
 
     private InAppBrowserDialog dialog;
     private WebView inAppWebView;
@@ -102,6 +105,7 @@ public class InAppBrowser extends CordovaPlugin {
     private Button backButton;
     private Button forwardButton;
     private CallbackContext callbackContext;
+    private boolean meliuzRedirectInterface = false;
     private boolean showZoomControls = true;
     private boolean openWindowHidden = false;
     private boolean clearAllCache= false;
@@ -126,9 +130,9 @@ public class InAppBrowser extends CordovaPlugin {
             }
             final String target = t;
             final HashMap<String, Boolean> features = parseFeature(args.optString(2));
-            
+
             Log.d(LOG_TAG, "target = " + target);
-            
+
             this.cordova.getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -193,7 +197,7 @@ public class InAppBrowser extends CordovaPlugin {
                         Log.d(LOG_TAG, "in blank");
                         result = showWebPage(url, features);
                     }
-    
+
                     PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, result);
                     pluginResult.setKeepCallback(true);
                     callbackContext.sendPluginResult(pluginResult);
@@ -252,9 +256,9 @@ public class InAppBrowser extends CordovaPlugin {
      */
     @Override
     public void onReset() {
-        closeDialog();        
+        closeDialog();
     }
-    
+
     /**
      * Called by AccelBroker when listener is to be shut down.
      * Stop listener.
@@ -262,7 +266,7 @@ public class InAppBrowser extends CordovaPlugin {
     public void onDestroy() {
         closeDialog();
     }
-    
+
     /**
      * Inject an object (script or style) into the InAppBrowser WebView.
      *
@@ -307,7 +311,7 @@ public class InAppBrowser extends CordovaPlugin {
 
     /**
      * Put the list of features into a hash map
-     * 
+     *
      * @param optString
      * @return
      */
@@ -359,6 +363,28 @@ public class InAppBrowser extends CordovaPlugin {
     }
 
     /**
+     * Shows up the coupon code
+     */
+    public void couponCodeDialog() {
+        new AlertDialog.Builder(cordova.getActivity())
+            .setTitle("CÓDIGO DE DESCONTO")
+            .setMessage(this.couponCodeButton.getContentDescription())
+            // .setCancelable(true)
+            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    // continue with delete
+                }
+            })
+            // .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            //     public void onClick(DialogInterface dialog, int which) {
+            //         // do nothing
+            //     }
+            //  })
+            // .setIcon(android.R.drawable.ic_dialog_alert)
+            .show();
+    }
+
+    /**
      * Closes the dialog
      */
     public void closeDialog() {
@@ -379,7 +405,7 @@ public class InAppBrowser extends CordovaPlugin {
                 }
             }
         });
-                // NB: From SDK 19: "If you call methods on WebView from any thread 
+                // NB: From SDK 19: "If you call methods on WebView from any thread
                 // other than your app's UI thread, it can cause unexpected results."
                 // http://developer.android.com/guide/webapps/migrating.html#Threads
                 childView.loadUrl("about:blank");
@@ -464,11 +490,12 @@ public class InAppBrowser extends CordovaPlugin {
     public String showWebPage(final String url, HashMap<String, Boolean> features) {
         showZoomControls = true;
         openWindowHidden = false;
+        meliuzRedirectInterface = false;
         if (features != null) {
             Boolean zoom = features.get(ZOOM);
             if (zoom != null) {
                 showZoomControls = zoom.booleanValue();
-            }            
+            }
             Boolean hidden = features.get(HIDDEN);
             if (hidden != null) {
                 openWindowHidden = hidden.booleanValue();
@@ -486,9 +513,14 @@ public class InAppBrowser extends CordovaPlugin {
                     clearSessionCache = cache.booleanValue();
                 }
             }
+            Boolean redirectInterface = features.get(REDIRECT_INTERFACE);
+            if (redirectInterface != null) {
+                meliuzRedirectInterface = redirectInterface.booleanValue();
+            }
         }
-        
+
         final CordovaWebView thatWebView = this.webView;
+        final boolean meliuzRedirectInterface = this.meliuzRedirectInterface;
 
         // Create dialog in new thread
         Runnable runnable = new Runnable() {
@@ -537,11 +569,11 @@ public class InAppBrowser extends CordovaPlugin {
 
                 // Close/Done button
                 closeButton = new Button(cordova.getActivity());
-                RelativeLayout.LayoutParams closeButtonLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
-                closeButtonLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                LinearLayout.LayoutParams closeButtonLayoutParams = new LinearLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), this.dpToPixels(TOUCH_SIZE));
                 closeButton.setLayoutParams(closeButtonLayoutParams);
+                closeButton.setGravity(Gravity.LEFT);
                 closeButton.setContentDescription("Fechar");
-                closeButton.setId(5);
+                closeButton.setId(50);
                 int closeButtonResId = activityRes.getIdentifier("ic_action_remove", "drawable", cordova.getActivity().getPackageName());
                 Drawable closeButtonIcon = activityRes.getDrawable(closeButtonResId);
                 try {
@@ -565,24 +597,29 @@ public class InAppBrowser extends CordovaPlugin {
 
                 // Title
                 titleView = new TextView(cordova.getActivity());
-                RelativeLayout.LayoutParams titleViewLayoutParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-                titleViewLayoutParams.addRule(RelativeLayout.RIGHT_OF, closeButton.getId());
+                LinearLayout.LayoutParams titleViewLayoutParams = new LinearLayout.LayoutParams(this.dpToPixels(0), LayoutParams.MATCH_PARENT, 1);
                 titleView.setLayoutParams(titleViewLayoutParams);
-                titleView.setPadding(this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0), this.dpToPixels(TOUCH_SIZE + TOOLBAR_PADDING), this.dpToPixels(0));
-                titleView.setText("CARREGANDO...");
+                titleView.setGravity(Gravity.CENTER);
+                titleView.setPadding(this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0), this.dpToPixels(TOOLBAR_PADDING), this.dpToPixels(0));
+                if (meliuzRedirectInterface) {
+                    titleView.setText("CARREGANDO...");
+                } else {
+                    titleView.setText("");
+                }
                 titleView.setGravity(Gravity.CENTER);
                 titleView.setTextSize(19);
                 titleView.setTypeface(Typeface.createFromAsset(cordova.getActivity().getApplicationContext().getAssets(), "www/assets/fonts/source-sans/SourceSansPro-Regular.ttf"));
                 titleView.setTextColor(android.graphics.Color.parseColor("#F13900"));
                 titleView.setContentDescription("");
+                titleView.setId(51);
 
                 // Coupon code button
                 couponCodeButton = new Button(cordova.getActivity());
-                RelativeLayout.LayoutParams couponCodeButtonLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), LayoutParams.MATCH_PARENT);
-                couponCodeButtonLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                LinearLayout.LayoutParams couponCodeButtonLayoutParams = new LinearLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE), this.dpToPixels(TOUCH_SIZE));
                 couponCodeButton.setLayoutParams(couponCodeButtonLayoutParams);
-                couponCodeButton.setContentDescription("Fechar");
-                couponCodeButton.setId(5);
+                couponCodeButton.setGravity(Gravity.RIGHT);
+                couponCodeButton.setContentDescription("");
+                couponCodeButton.setId(52);
                 int couponCodeButtonResId = activityRes.getIdentifier("ic_action_remove", "drawable", cordova.getActivity().getPackageName());
                 Drawable couponCodeButtonIcon = activityRes.getDrawable(couponCodeButtonResId);
                 try {
@@ -600,7 +637,7 @@ public class InAppBrowser extends CordovaPlugin {
                 }
                 couponCodeButton.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
-                        closeDialog();
+                        couponCodeDialog();
                     }
                 });
                 couponCodeButton.setEnabled(false);
@@ -722,7 +759,7 @@ public class InAppBrowser extends CordovaPlugin {
                 inAppWebView.addJavascriptInterface(new AndroidJavaScriptInterface(titleView, cashbackView, couponCodeButton), "androidJSInterface");
                 inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(0), 1));
                 inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView));
-                WebViewClient client = new InAppBrowserClient(thatWebView);
+                WebViewClient client = new InAppBrowserClient(thatWebView, meliuzRedirectInterface);
                 inAppWebView.setWebViewClient(client);
                 WebSettings settings = inAppWebView.getSettings();
                 settings.setJavaScriptEnabled(true);
@@ -793,7 +830,7 @@ public class InAppBrowser extends CordovaPlugin {
      *
      * @param obj a JSONObject contain event payload information
      * @param status the status code to return to the JavaScript environment
-     */    
+     */
     private void sendUpdate(JSONObject obj, boolean keepCallback, PluginResult.Status status) {
         if (callbackContext != null) {
             PluginResult result = new PluginResult(status, obj);
@@ -827,7 +864,7 @@ public class InAppBrowser extends CordovaPlugin {
             final TextView titleView = this.titleView;
             final TextView cashbackView = this.cashbackView;
             final Button couponCodeButton = this.couponCodeButton;
-            
+
             // when updating UI, needs to run on UI Thread
             // http://stackoverflow.com/a/17230947/165233
             cordova.getActivity().runOnUiThread(new Runnable() {
@@ -845,27 +882,44 @@ public class InAppBrowser extends CordovaPlugin {
                     if (!couponCodeString.equals("")) {
                         couponCodeButton.setEnabled(true);
                         couponCodeButton.setAlpha(1.0f);
+                        couponCodeButton.setContentDescription(couponCodeString);
                     }
                 }
             });
         }
+
+        @JavascriptInterface
+        public void updateTitle(final String titleString) {
+            final TextView titleView = this.titleView;
+
+            // when updating UI, needs to run on UI Thread
+            // http://stackoverflow.com/a/17230947/165233
+            cordova.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    titleView.setText(titleString.toUpperCase());
+                    titleView.setContentDescription(titleString);
+                }
+            });
+        }
     }
-    
+
     /**
      * The webview client receives notifications about appView
      */
     public class InAppBrowserClient extends WebViewClient {
         CordovaWebView webView;
         boolean checkedVars;
+        boolean meliuzRedirectInterface;
 
         /**
          * Constructor.
          *
          * @param mContext
          */
-        public InAppBrowserClient(CordovaWebView webView) {
+        public InAppBrowserClient(CordovaWebView webView, boolean meliuzRedirectInterface) {
             this.webView = webView;
-            checkedVars = false;
+            this.checkedVars = false;
+            this.meliuzRedirectInterface = meliuzRedirectInterface;
         }
 
         /**
@@ -934,13 +988,13 @@ public class InAppBrowser extends CordovaPlugin {
                 JSONObject obj = new JSONObject();
                 obj.put("type", LOAD_START_EVENT);
                 obj.put("url", newloc);
-    
+
                 sendUpdate(obj, true);
             } catch (JSONException ex) {
                 Log.d(LOG_TAG, "Should never happen");
             }
         }
-        
+
         public void onPageFinished(WebView view, String url) {
             if (inAppWebView.canGoBack()) {
                 backButton.setEnabled(true);
@@ -958,35 +1012,37 @@ public class InAppBrowser extends CordovaPlugin {
             }
 
             super.onPageFinished(view, url);
-            
+
             try {
                 JSONObject obj = new JSONObject();
                 obj.put("type", LOAD_STOP_EVENT);
                 obj.put("url", url);
-    
+
                 sendUpdate(obj, true);
             } catch (JSONException ex) {
                 Log.d(LOG_TAG, "Should never happen");
             }
 
-            if (!checkedVars) {
+            if (!this.checkedVars && this.meliuzRedirectInterface) {
                 // set checkdVars, clear history, update interface and redirect user
-                checkedVars = true;
+                this.checkedVars = true;
                 view.loadUrl("javascript: window.androidJSInterface.updateInterface(window.meliuz.storeTitle, window.meliuz.cashbackString, window.meliuz.couponCode, window.meliuz.mobileFriendly);");
                 view.clearHistory();
+            } else if (!this.meliuzRedirectInterface) {
+                view.loadUrl("javascript: window.androidJSInterface.updateTitle(window.document.title);");
             }
         }
-        
+
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
             super.onReceivedError(view, errorCode, description, failingUrl);
-            
+
             try {
                 JSONObject obj = new JSONObject();
                 obj.put("type", LOAD_ERROR_EVENT);
                 obj.put("url", failingUrl);
                 obj.put("code", errorCode);
                 obj.put("message", description);
-    
+
                 sendUpdate(obj, true, PluginResult.Status.ERROR);
             } catch (JSONException ex) {
                 Log.d(LOG_TAG, "Should never happen");
