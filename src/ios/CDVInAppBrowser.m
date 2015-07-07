@@ -106,6 +106,7 @@
 }
 
 - (void)openInInAppBrowser:(NSURL *)url withOptions:(NSString *)options {
+    NSLog(@"OPTIONS 0: %@", options);
     CDVInAppBrowserOptions* browserOptions = [CDVInAppBrowserOptions parseOptions:options];
 
     if (browserOptions.clearcache) {
@@ -181,6 +182,8 @@
         self.inAppBrowserViewController.webView.keyboardDisplayRequiresUserAction = browserOptions.keyboarddisplayrequiresuseraction;
         self.inAppBrowserViewController.webView.suppressesIncrementalRendering = browserOptions.suppressesincrementalrendering;
     }
+
+    NSLog(@"STEP 1");
 
     [self.inAppBrowserViewController navigateTo:url];
     if (!browserOptions.hidden) {
@@ -437,12 +440,13 @@
         _userAgent = userAgent;
         _prevUserAgent = prevUserAgent;
         _browserOptions = browserOptions;
+        NSLog(@"OPTIONS 2: %@", browserOptions);
 #ifdef __CORDOVA_4_0_0
         _webViewDelegate = [[CDVUIWebViewDelegate alloc] initWithDelegate:self];
 #else
         _webViewDelegate = [[CDVWebViewDelegate alloc] initWithDelegate:self];
 #endif
-        
+
         [self createViews];
     }
 
@@ -464,7 +468,7 @@
     self.webView.opaque = YES;
     self.webView.scalesPageToFit = NO;
     self.webView.userInteractionEnabled = YES;
-    
+
     [self.view addSubview:self.webView];
     [self.view sendSubviewToBack:self.webView];
 
@@ -511,10 +515,15 @@
     titleView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.titleButton = [[UIBarButtonItem alloc] initWithCustomView:titleView];
     [self.titleButton setTag:911];
-    
+
     [self.topToolbar setItems:@[self.closeButton, self.titleButton]];
 
-    [self setTitleButtonTitle:@"CARREGANDO..."];
+    NSLog(@"OPTIONS 3: %@", _browserOptions);
+    if (_browserOptions.meliuzredirectinterface) {
+        [self setTitleButtonTitle:@"CARREGANDO..."];
+    } else {
+        [self setTitleButtonTitle:@""];
+    }
 
     self.bottomToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.f, self.view.bounds.size.height - TOOLBAR_HEIGHT, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
     self.bottomToolbar.autoresizesSubviews = YES;
@@ -534,7 +543,7 @@
     cashbackView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.cashbackButton = [[UIBarButtonItem alloc] initWithCustomView:cashbackView];
     [self.cashbackButton setTag:912];
-    
+
     NSString *forwardIconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/images/icon-forward.png"];
     UIImage *forwardIcon = [UIImage imageWithContentsOfFile:forwardIconPath];
     UIButton *forwardIconButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -543,7 +552,7 @@
     [forwardIconButton setImage:forwardIcon forState:UIControlStateNormal];
     // [forwardIconButton setBackgroundColor:[UIColor yellowColor]];
     self.forwardButton = [[UIBarButtonItem alloc] initWithCustomView:forwardIconButton];
-    
+
     NSString *backIconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/images/icon-back.png"];
     UIImage *backIcon = [UIImage imageWithContentsOfFile:backIconPath];
     UIButton *backIconButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -552,7 +561,7 @@
     [backIconButton setImage:backIcon forState:UIControlStateNormal];
     // [backIconButton setBackgroundColor:[UIColor yellowColor]];
     self.backButton = [[UIBarButtonItem alloc] initWithCustomView:backIconButton];
-    
+
     [self.bottomToolbar setItems:@[self.cashbackButton, self.backButton, self.forwardButton]];
 
     [self setCashbackButtonTitle:@"" mobileFriendly:NO];
@@ -575,7 +584,7 @@
     titleLabel.textColor = MELIUZ_RED;
     titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     // titleLabel.backgroundColor = [UIColor yellowColor];
-    
+
     NSString *fpath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/fonts/source-sans/SourceSansPro-Regular.ttf"];
     CGDataProviderRef fontDataProvider = CGDataProviderCreateWithFilename([fpath UTF8String]);
     CGFontRef customFont = CGFontCreateWithDataProvider(fontDataProvider);
@@ -585,7 +594,7 @@
     CTFontManagerRegisterGraphicsFont(customFont, &error);
     CGFontRelease(customFont);
     UIFont *uifont = [UIFont fontWithName:fontName size:19];
-    
+
     titleLabel.font = uifont;
     self.titleButton = [[UIBarButtonItem alloc] initWithCustomView:titleLabel];
     [self.titleButton setTag:911];
@@ -625,7 +634,7 @@
     titleLabel.textAlignment = NSTextAlignmentLeft;
     titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     // titleLabel.backgroundColor = [UIColor yellowColor];
-    
+
     self.cashbackButton = [[UIBarButtonItem alloc] initWithCustomView:titleLabel];
     [self.cashbackButton setTag:912];
 
@@ -729,21 +738,19 @@
 }
 
 - (void)updateInterface {
-    BOOL mobileFriendly = [[self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.mobileFriendly"] isEqualToString:@"true"];
-    NSString *storeTitle = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.storeTitle"];
-    NSString *cashbackString = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.cashbackString"];
-    NSString *couponCode = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.couponCode"];
-    [self setTitleButtonTitle:storeTitle];
-    [self setCashbackButtonTitle:cashbackString mobileFriendly:mobileFriendly];
-    if ([couponCode length] > 0) {
-        [self showCodeButton];
-    }
-    self.checkedVars = YES;
-}
-
-- (void)checkVariables {
-    if (!self.checkedVars) {
-        [self updateInterface];
+    if (!self.checkedVars && _browserOptions.meliuzredirectinterface) {
+        self.checkedVars = YES;
+        BOOL mobileFriendly = [[self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.mobileFriendly"] isEqualToString:@"true"];
+        NSString *storeTitle = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.storeTitle"];
+        NSString *cashbackString = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.cashbackString"];
+        NSString *couponCode = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.couponCode"];
+        [self setTitleButtonTitle:storeTitle];
+        [self setCashbackButtonTitle:cashbackString mobileFriendly:mobileFriendly];
+        if ([couponCode length] > 0) {
+            [self showCodeButton];
+        }
+    } else if (!_browserOptions.meliuzredirectinterface) {
+        [self setTitleButtonTitle:[self.webView stringByEvaluatingJavaScriptFromString:@"window.document.title"]];
     }
 }
 
@@ -795,8 +802,8 @@
         [CDVUserAgentUtil setUserAgent:_prevUserAgent lockToken:_userAgentLockToken];
     }
 
-    // Check for variables
-    [self checkVariables];
+    // Update interface
+    [self updateInterface];
 
     [self.navigationDelegate webViewDidFinishLoad:theWebView];
 }
@@ -846,10 +853,10 @@
 - (id)init {
     if (self = [super init]) {
         // default values
-        self.closebuttoncaption = nil;
         self.clearcache = NO;
         self.clearsessioncache = NO;
 
+        self.meliuzredirectinterface = NO;
         self.enableviewportscale = NO;
         self.mediaplaybackrequiresuseraction = NO;
         self.allowinlinemediaplayback = NO;
@@ -863,6 +870,7 @@
 }
 
 + (CDVInAppBrowserOptions *)parseOptions:(NSString *)options {
+    NSLog(@"OPTIONS 1A: %@", options);
     CDVInAppBrowserOptions* obj = [[CDVInAppBrowserOptions alloc] init];
 
     // NOTE: this parsing does not handle quotes within values
@@ -894,6 +902,8 @@
             }
         }
     }
+
+    NSLog(@"OPTIONS 1B: %@", obj);
 
     return obj;
 }
