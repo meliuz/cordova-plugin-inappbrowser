@@ -106,7 +106,6 @@
 }
 
 - (void)openInInAppBrowser:(NSURL *)url withOptions:(NSString *)options {
-    NSLog(@"OPTIONS 0: %@", options);
     CDVInAppBrowserOptions* browserOptions = [CDVInAppBrowserOptions parseOptions:options];
 
     if (browserOptions.clearcache) {
@@ -182,8 +181,6 @@
         self.inAppBrowserViewController.webView.keyboardDisplayRequiresUserAction = browserOptions.keyboarddisplayrequiresuseraction;
         self.inAppBrowserViewController.webView.suppressesIncrementalRendering = browserOptions.suppressesincrementalrendering;
     }
-
-    NSLog(@"STEP 1");
 
     [self.inAppBrowserViewController navigateTo:url];
     if (!browserOptions.hidden) {
@@ -440,7 +437,6 @@
         _userAgent = userAgent;
         _prevUserAgent = prevUserAgent;
         _browserOptions = browserOptions;
-        NSLog(@"OPTIONS 2: %@", browserOptions);
 #ifdef __CORDOVA_4_0_0
         _webViewDelegate = [[CDVUIWebViewDelegate alloc] initWithDelegate:self];
 #else
@@ -518,7 +514,6 @@
 
     [self.topToolbar setItems:@[self.closeButton, self.titleButton]];
 
-    NSLog(@"OPTIONS 3: %@", _browserOptions);
     if (_browserOptions.meliuzredirectinterface) {
         [self setTitleButtonTitle:@"CARREGANDO..."];
     } else {
@@ -870,7 +865,6 @@
 }
 
 + (CDVInAppBrowserOptions *)parseOptions:(NSString *)options {
-    NSLog(@"OPTIONS 1A: %@", options);
     CDVInAppBrowserOptions* obj = [[CDVInAppBrowserOptions alloc] init];
 
     // NOTE: this parsing does not handle quotes within values
@@ -902,8 +896,6 @@
             }
         }
     }
-
-    NSLog(@"OPTIONS 1B: %@", obj);
 
     return obj;
 }
