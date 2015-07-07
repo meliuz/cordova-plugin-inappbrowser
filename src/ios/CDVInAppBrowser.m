@@ -642,7 +642,7 @@
     NSString *codeIconPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"/www/assets/images/icon-code.png"];
     UIImage *codeIcon = [UIImage imageWithContentsOfFile:codeIconPath];
     UIButton *codeIconButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [codeIconButton addTarget:self action:@selector(close) forControlEvents:UIControlEventTouchUpInside];
+    [codeIconButton addTarget:self action:@selector(showCode) forControlEvents:UIControlEventTouchUpInside];
     codeIconButton.bounds = CGRectMake(0, 0, codeIcon.size.width, codeIcon.size.height);
     [codeIconButton setImage:codeIcon forState:UIControlStateNormal];
     // [codeIconButton setBackgroundColor:[UIColor yellowColor]];
@@ -681,6 +681,18 @@
         } else {
             [[self parentViewController] dismissViewControllerAnimated:YES completion:nil];
         }
+    });
+}
+
+- (void)showCode {
+    // Run later to avoid the "took a long time" log message.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"CÓDIGO DE DESCONTO"
+                                                message:self.codeString
+                                               delegate:nil
+                                      cancelButtonTitle:@"OK"
+                                      otherButtonTitles:nil];
+        [alert show];
     });
 }
 
@@ -738,10 +750,10 @@
         BOOL mobileFriendly = [[self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.mobileFriendly"] isEqualToString:@"true"];
         NSString *storeTitle = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.storeTitle"];
         NSString *cashbackString = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.cashbackString"];
-        NSString *couponCode = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.couponCode"];
+        self.codeString = [self.webView stringByEvaluatingJavaScriptFromString:@"window.meliuz.couponCode"];
         [self setTitleButtonTitle:storeTitle];
         [self setCashbackButtonTitle:cashbackString mobileFriendly:mobileFriendly];
-        if ([couponCode length] > 0) {
+        if ([self.codeString length] > 0) {
             [self showCodeButton];
         }
     } else if (!_browserOptions.meliuzredirectinterface) {

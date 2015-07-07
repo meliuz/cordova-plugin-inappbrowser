@@ -86,6 +86,7 @@
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* closeButton;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* titleButton;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* codeButton;
+@property (nonatomic, strong) NSString* codeString;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* cashbackButton;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* backButton;
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* forwardButton;
