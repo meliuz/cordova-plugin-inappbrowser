@@ -400,11 +400,11 @@ public class InAppBrowser extends CordovaPlugin {
                 childView.setWebViewClient(new WebViewClient() {
                     // NB: wait for about:blank before dismissing
                     public void onPageFinished(WebView view, String url) {
-                if (dialog != null) {
-                    dialog.dismiss();
-                }
-            }
-        });
+                        if (dialog != null) {
+                            dialog.dismiss();
+                        }
+                    }
+                });
                 // NB: From SDK 19: "If you call methods on WebView from any thread
                 // other than your app's UI thread, it can cause unexpected results."
                 // http://developer.android.com/guide/webapps/migrating.html#Threads
@@ -1033,8 +1033,23 @@ public class InAppBrowser extends CordovaPlugin {
             }
         }
 
-        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+        public void onReceivedError(WebView view, int errorCode, String description, final String failingUrl) {
             super.onReceivedError(view, errorCode, description, failingUrl);
+
+            new AlertDialog.Builder(cordova.getActivity())
+                .setTitle("Deu ruim...")
+                .setMessage("Houve algum problema ao carregar esta página. O que você quer fazer?")
+                .setPositiveButton("Tentar denovo", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        inAppWebView.loadUrl(failingUrl);
+                    }
+                })
+                .setNegativeButton("Fechar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        closeDialog();
+                    }
+                })
+                .show();
 
             try {
                 JSONObject obj = new JSONObject();
