@@ -761,6 +761,19 @@
     }
 }
 
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if (alertView.tag == 1) {
+        // tag 1 = load error alert
+        if (buttonIndex == 0) {
+            // close
+            [self close];
+        } else {
+            // try again
+            [self.webView loadRequest:[NSURLRequest requestWithURL:currentURL]];
+        }
+    }
+}
+
 #pragma mark UIWebViewDelegate
 
 - (void)webViewDidStartLoad:(UIWebView *)theWebView {
@@ -818,6 +831,17 @@
 - (void)webView:(UIWebView *)theWebView didFailLoadWithError:(NSError *)error {
     // log fail message, stop spinner, update back/forward
     NSLog(@"webView:didFailLoadWithError - %ld: %@", (long)error.code, [error localizedDescription]);
+
+    // Run later to avoid the "took a long time" log message.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Deu ruim..."
+                                                        message:@"Houve algum problema ao carregar esta página. O que você quer fazer?"
+                                                       delegate:self
+                                              cancelButtonTitle:@"Fechar"
+                                              otherButtonTitles:@"Tentar denovo", nil];
+        [alert setTag:1];
+        [alert show];
+    });
 
     self.backButton.enabled = theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
