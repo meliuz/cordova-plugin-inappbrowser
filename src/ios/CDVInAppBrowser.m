@@ -481,7 +481,7 @@
     self.spinner.multipleTouchEnabled = NO;
     self.spinner.opaque = NO;
     self.spinner.userInteractionEnabled = NO;
-    [self.spinner stopAnimating];
+    [self.spinner startAnimating];
 
     self.topToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.f, 0.f, self.view.bounds.size.width, TOOLBAR_HEIGHT)];
     self.topToolbar.autoresizesSubviews = YES;
@@ -557,14 +557,18 @@
     // [backIconButton setBackgroundColor:[UIColor yellowColor]];
     self.backButton = [[UIBarButtonItem alloc] initWithCustomView:backIconButton];
 
-    [self.bottomToolbar setItems:@[self.cashbackButton, self.backButton, self.forwardButton]];
+    UIButton *spinnerButton = [[UIBarButtonItem alloc] initWithCustomView:self.spinner];
+    // spinnerButton.bounds = CGRectMake(0, 0, 20.f, 20.f);
+    // [spinnerButton setBackgroundColor:[UIColor redColor]];
+
+    [self.bottomToolbar setItems:@[self.cashbackButton, spinnerButton, self.backButton, self.forwardButton]];
 
     [self setCashbackButtonTitle:@"" mobileFriendly:NO];
 
     self.view.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:self.topToolbar];
     [self.view addSubview:self.bottomToolbar];
-    [self.view addSubview:self.spinner];
+    // [self.view addSubview:self.spinner];
 }
 
 - (CGFloat)getTitleButtonWidth {
@@ -600,7 +604,7 @@
 }
 
 - (CGFloat)getCashbackButtonWidth {
-    return self.bottomToolbar.frame.size.width - (2 * BUTTON_WIDTH) - (2 * PADDING_WIDTH) - (2 * GAP_WIDTH);
+    return self.bottomToolbar.frame.size.width - 20.f - (2 * BUTTON_WIDTH) - (2 * PADDING_WIDTH) - (2 * GAP_WIDTH);
 }
 
 - (void)setCashbackButtonTitle:(NSString *)title mobileFriendly:(BOOL)mobileFriendly {
