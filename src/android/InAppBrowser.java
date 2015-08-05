@@ -53,6 +53,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.ProgressBar;
 import android.app.AlertDialog;
 
 import org.apache.cordova.CallbackContext;
@@ -100,6 +101,7 @@ public class InAppBrowser extends CordovaPlugin {
     private WebView inAppWebView;
     private TextView titleView;
     private TextView cashbackView;
+    private ProgressBar loadingProgressBar;
     private Button closeButton;
     private Button couponCodeButton;
     private Button backButton;
@@ -742,12 +744,21 @@ public class InAppBrowser extends CordovaPlugin {
                 cashbackView.setContentDescription("");
                 cashbackView.setId(99);
 
+                // LoadingProgressBar
+                loadingProgressBar = new ProgressBar(cordova.getActivity(), null, android.R.attr.progressBarStyleSmall);
+                RelativeLayout.LayoutParams loadingProgressBarLayoutParams = new RelativeLayout.LayoutParams(this.dpToPixels(TOUCH_SIZE) / 2, this.dpToPixels(TOUCH_SIZE) / 2);
+                loadingProgressBarLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                loadingProgressBar.setLayoutParams(loadingProgressBarLayoutParams);
+                loadingProgressBar.setIndeterminate(true);
+                loadingProgressBar.setId(999);
+
                 // Add the back and forward buttons to our action button container layout
                 actionButtonContainer.addView(forwardButton);
                 actionButtonContainer.addView(backButton);
 
                 // Add the views to our bottomToolbar
                 bottomToolbar.addView(cashbackView);
+                bottomToolbar.addView(loadingProgressBar);
                 bottomToolbar.addView(actionButtonContainer);
 
                 /**
@@ -759,7 +770,7 @@ public class InAppBrowser extends CordovaPlugin {
                 inAppWebView.addJavascriptInterface(new AndroidJavaScriptInterface(titleView, cashbackView, couponCodeButton), "androidJSInterface");
                 inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(0), 1));
                 inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView));
-                WebViewClient client = new InAppBrowserClient(thatWebView, meliuzRedirectInterface);
+                WebViewClient client = new InAppBrowserClient(thatWebView, meliuzRedirectInterface, loadingProgressBar);
                 inAppWebView.setWebViewClient(client);
                 WebSettings settings = inAppWebView.getSettings();
                 settings.setJavaScriptEnabled(true);
@@ -910,16 +921,18 @@ public class InAppBrowser extends CordovaPlugin {
         CordovaWebView webView;
         boolean checkedVars;
         boolean meliuzRedirectInterface;
+        ProgressBar loadingProgressBar;
 
         /**
          * Constructor.
          *
          * @param mContext
          */
-        public InAppBrowserClient(CordovaWebView webView, boolean meliuzRedirectInterface) {
+        public InAppBrowserClient(CordovaWebView webView, boolean meliuzRedirectInterface, ProgressBar loadingProgressBar) {
             this.webView = webView;
             this.checkedVars = false;
             this.meliuzRedirectInterface = meliuzRedirectInterface;
+            this.loadingProgressBar = loadingProgressBar;
         }
 
         /**
@@ -930,6 +943,8 @@ public class InAppBrowser extends CordovaPlugin {
          */
         @Override
         public void onPageStarted(WebView view, String url,  Bitmap favicon) {
+            this.loadingProgressBar.setVisibility(ProgressBar.VISIBLE);
+
             super.onPageStarted(view, url, favicon);
             String newloc = "";
             if (url.startsWith("http:") || url.startsWith("https:") || url.startsWith("file:")) {
@@ -996,6 +1011,8 @@ public class InAppBrowser extends CordovaPlugin {
         }
 
         public void onPageFinished(WebView view, String url) {
+            this.loadingProgressBar.setVisibility(ProgressBar.GONE);
+
             if (inAppWebView.canGoBack()) {
                 backButton.setEnabled(true);
                 backButton.setAlpha(1.0f);
@@ -1034,6 +1051,8 @@ public class InAppBrowser extends CordovaPlugin {
         }
 
         public void onReceivedError(WebView view, int errorCode, String description, final String failingUrl) {
+            this.loadingProgressBar.setVisibility(ProgressBar.GONE);
+
             super.onReceivedError(view, errorCode, description, failingUrl);
 
             new AlertDialog.Builder(cordova.getActivity())
