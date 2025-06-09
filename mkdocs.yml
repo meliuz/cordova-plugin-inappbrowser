@@ -1,0 +1,5 @@
+site_name: cordova-plugin-inappbrowser
+nav:
+  - Home: README.md
+plugins:
+  - techdocs-core
