@@ -13,3 +13,4 @@ metadata:
 spec:
   lifecycle: production
   type: service
+  owner: Unknown
