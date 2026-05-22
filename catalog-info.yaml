@@ -5,10 +5,11 @@ metadata:
   annotations:
     backstage.io/techdocs-ref: dir:.
     github.com/project-slug: meliuz/cordova-plugin-inappbrowser
-  description: '# cordova-plugin-inappbrowser
+  description: |-
+    # cordova-plugin-inappbrowser
 
-
-    [![Build Status](https://travis-ci.org/apache/cordova-plugin-inappbrowser.svg)](https://travis-ci.org/apache/cordova-pl...'
+    [![Build Status](https://travis-ci.org/apache/cordova-plugin-
+    inappbrowser.svg)](https://travis-ci.org/apache/cordova-pl...
   name: cordova-plugin-inappbrowser
 spec:
   lifecycle: production
